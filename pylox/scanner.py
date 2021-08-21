@@ -23,8 +23,8 @@ class Scanner:
     KEYWORDS["while"]=T.WHILE
     
 
-    def __init__(self,source='',TOKENS=[''],start=0,current=0,line=1) -> None:
-        self.TOKENS=TOKENS
+    def __init__(self,source='',start=0,current=0,line=1) -> None:
+        self.TOKENS=[]
         self.source=source
         self.start=start
         self.current=current
@@ -89,7 +89,7 @@ class Scanner:
                 self.addToken(T.OR)
         elif c == '\n': 
             self.line+=1
-        elif c=='""':
+        elif c=='"':
             self.string()
         else:
             if self.isDigit(c):
@@ -104,10 +104,12 @@ class Scanner:
         while self.isAlphaNumeric(self.peek()):
             self.advance()
         
-        text = self.source[self.start,self.current]
-        type = self.KEYWORDS[text]
+        text = self.source[self.start:self.current]
+        type = self.KEYWORDS.get(text)
+        if type==None:
+            type = T.IDENTIFIER
         self.addToken(type)
-        self.addToken(T.IDENTIFIER)
+        #self.addToken(T.IDENTIFIER)
     
     def number(self):
         print('number')
@@ -119,7 +121,7 @@ class Scanner:
             while self.isDigit(self.peek()):
                 self.advance()
         
-        self.addToken(T.NUMBER,float(self.source[self.start,self.current]) )
+        self.addToken(T.NUMBER,float(self.source[self.start:self.current]) )
 
     def string(self):
         print('string')

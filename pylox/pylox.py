@@ -37,7 +37,7 @@ def run(a):
         print(x)
     if Error.errormsg:
         exit()
-    return 0
+    
 
 
 
