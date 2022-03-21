@@ -25,7 +25,10 @@ class Lox {
         buf<<ScriptFile.rdbuf();
         
         run(buf.str());
+
         ScriptFile.close();
+
+        if (hadError) exit(65);
 
     } 
 
@@ -38,6 +41,7 @@ class Lox {
             cin>>line;
             if(cin.eof()) break;
             run(line);
+            hadError=false;
             
         }
 
