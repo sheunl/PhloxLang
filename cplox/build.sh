@@ -1,0 +1,1 @@
+c++ cplox.cpp loxlibs/scanner.cpp loxlibs/token.cpp -o cplox
