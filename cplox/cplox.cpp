@@ -4,10 +4,11 @@
 #include <list>
 #include "loxlibs/scanner.h"
 #include "loxlibs/token.h"
+#include "loxlibs/error.h"
 
 using namespace std;
 
-bool hadError = false;
+
 
 class Lox {
     
@@ -28,7 +29,7 @@ class Lox {
 
         ScriptFile.close();
 
-        if (hadError) exit(65);
+        if (Error::hadError) exit(65);
 
     } 
 
@@ -41,7 +42,7 @@ class Lox {
             cin>>line;
             if(cin.eof()) break;
             run(line);
-            hadError=false;
+            Error::hadError=false;
             
         }
 
@@ -67,14 +68,6 @@ class Lox {
     
 };
 
-void report(int line, string where, string message){
-    cerr<<"[line "<<line<< "] Error" <<where <<": "<<message;
-    hadError =true;
-}
-
-void error(int line, string message){
-    report(line,"",message);
-}
 
 
 int main(int argc, char** argv){
