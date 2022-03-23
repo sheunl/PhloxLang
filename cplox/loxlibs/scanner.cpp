@@ -3,36 +3,37 @@
 #include <list>
 #include <string>
 #include <map>
+#include <typeinfo>
 #include "tokentype.h"
 #include "scanner.h"
 #include "error.h"
 
 using namespace std;
 
-static map<string,TokenType> keywords;
-/*
-keywords.emplace("and",AND);
-keywords.emplace("class",CLASS);
-keywords.emplace("else",ELSE);
-keywords.emplace("false",FALSE);
-keywords.emplace("for",FOR);
-keywords.emplace("fun",FUN);
-keywords.emplace("if",IF);
-keywords.emplace("nil",NIL);
-keywords.emplace("or",OR);
-keywords.emplace("print",PRINT);
-keywords.emplace("return",RETURN);
-keywords.emplace("super",SUPER);
-keywords.emplace("this",THIS);
-keywords.emplace("true",TRUE);
-keywords.emplace("var",VAR);
-keywords.emplace("while",WHILE); */
+ 
 
 
 
 Scanner::Scanner(string s):source(s)
 {
     cout<<"Scanner is Called! with source:\n"<<source<<endl;
+
+keywords.insert(pair<string,TokenType>("and",AND));
+keywords.insert(pair<string,TokenType>("class",CLASS));
+keywords.insert(pair<string,TokenType>("else",ELSE));
+keywords.insert(pair<string,TokenType>("false",FALSE));
+keywords.insert(pair<string,TokenType>("for",FOR));
+keywords.insert(pair<string,TokenType>("fun",FUN));
+keywords.insert(pair<string,TokenType>("if",IF));
+keywords.insert(pair<string,TokenType>("nil",NIL));
+keywords.insert(pair<string,TokenType>("or",OR));
+keywords.insert(pair<string,TokenType>("print",PRINT));
+keywords.insert(pair<string,TokenType>("return",RETURN));
+keywords.insert(pair<string,TokenType>("super",SUPER));
+keywords.insert(pair<string,TokenType>("this",THIS));
+keywords.insert(pair<string,TokenType>("true",TRUE));
+keywords.insert(pair<string,TokenType>("var",VAR));
+keywords.insert(pair<string,TokenType>("while",WHILE));
 
 }
 
@@ -52,7 +53,8 @@ template <typename T>
 void Scanner::addToken(TokenType type, T literal)
 {
     string text = source.substr(start,current);
-    Token send(type,text,literal,line);
+    string ov="";
+    Token send(type,text,ov,line);
     tokens.push_back(send);
 }
 
@@ -133,7 +135,8 @@ void Scanner::scanToken(){
 void Scanner::identifier(){
     while (isAlphaNumeric(peek())) advance();
     string text = source.substr(start, current);
-    TokenType type = keywords.at(text);
+   // TokenType type = keywords.at(text);
+    TokenType type =IF;
     if (type == NULL) type = IDENTIFIER;
     addToken(type);
 }

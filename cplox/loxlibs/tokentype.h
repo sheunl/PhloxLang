@@ -1,7 +1,7 @@
 #ifndef TOKENTYPE_H
 #define TOKENTYPE_H
 
-enum TokenType {
+typedef enum Tokentype {
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
   COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
 
@@ -19,6 +19,6 @@ enum TokenType {
   PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
 
   EO_F
-};
+} TokenType;
 
 #endif

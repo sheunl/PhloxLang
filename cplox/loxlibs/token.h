@@ -32,8 +32,8 @@ class Token{
     const int line;
 
     public:
-    template <typename T>
-    Token(TokenType type, string lexeme, T literal, int line);
+    //template <typename T>
+    Token(TokenType type, string lexeme, string literal, int line);
     ~Token();
     void add();
     string toString();

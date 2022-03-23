@@ -6,6 +6,7 @@
 #include <array>
 #include <list>
 #include "token.h"
+#include "tokentype.h"
 
 using namespace std;
 
@@ -17,6 +18,7 @@ private:
     int start =0;
     int current = 0;
     int line = 1;
+    static map<string,TokenType> keywords;
 public:
     Scanner(string source);
     ~Scanner();
