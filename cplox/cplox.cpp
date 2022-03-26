@@ -2,9 +2,13 @@
 #include <sstream>
 #include <fstream>
 #include <list>
+#include <string>
 #include "loxlibs/scanner.h"
 #include "loxlibs/token.h"
 #include "loxlibs/error.h"
+
+
+//#define TEST_MODE
 
 using namespace std;
 
@@ -17,24 +21,44 @@ class Lox {
     Lox(){
     }
 
-    static void runFile(string path){   
-       cout<<"Reading File\n";
+    static void runFile(string path){  
+        #ifdef TEST_MODE
+       cout<<"\nReading File: "<<__FUNCTION__<<"\n";
+       #endif
         
        ifstream ScriptFile(path);
-       stringstream buf;
+       string buf;
+      /* stringstream buf;
 
         buf<<ScriptFile.rdbuf();
         
         run(buf.str());
 
         ScriptFile.close();
+        */
 
-        if (Error::hadError) exit(65);
+       if(!ScriptFile.is_open()){
+           cerr<<"Error: Could not open file.";
+           exit(65);
+       }
+
+       while(ScriptFile.peek()!=EOF){
+           ScriptFile>>buf;
+           run(buf);
+           buf="";
+           //cout<<buf<<"\n";
+       }
+
+       ScriptFile.close();
+
+        if (hadError) exit(65);
 
     } 
 
     static void runPrompt(){
-        cout<<"Running Prompt\n";
+        #ifdef TEST_MODE
+        cout<<"\nRunning Prompt:<<__FUNCTION__<<"\n";
+        #endif
 
         string line;
         for(;;){
@@ -42,26 +66,26 @@ class Lox {
             cin>>line;
             if(cin.eof()) break;
             run(line);
-            Error::hadError=false;
+            hadError=false;
             
         }
 
     }
 
-   // static ;
 
     static void run(string source){
-        cout<<"\n"<<source<<"\n";
+        #ifdef TEST_MODE
+        cout<<"\n"<<source in function:<<__FUNCTION__<<"\n";
+        #endif
 
        Scanner s(source);
-       list<Token> one;
+       list<Token> one =s.scanTokens();
 
         for(list<Token>::iterator it= one.begin(); it!= one.end();it++){
-            cout<< &it <<" ";
+            cout<< it->toString() <<"\n";
         }
 
         cout<<endl;
-     //   for ();
 
     }
 

@@ -18,6 +18,8 @@ class Object{
 
 };
 
+static map<TokenType,string> TokenNames;
+
 
 
 

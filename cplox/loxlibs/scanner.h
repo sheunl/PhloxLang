@@ -7,8 +7,13 @@
 #include <list>
 #include "token.h"
 #include "tokentype.h"
+#include <unordered_map>
+
 
 using namespace std;
+
+static unordered_map<string,TokenType> keywords;
+
 
 class Scanner
 {
@@ -18,7 +23,6 @@ private:
     int start =0;
     int current = 0;
     int line = 1;
-    static map<string,TokenType> keywords;
 public:
     Scanner(string source);
     ~Scanner();

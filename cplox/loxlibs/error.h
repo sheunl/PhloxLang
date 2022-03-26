@@ -5,9 +5,11 @@
 
 using namespace std;
 
+static bool hadError = false;
+
 class Error{
     public:
-    static bool hadError;
+    //static bool hadError;
 
     
     Error();
@@ -18,6 +20,6 @@ class Error{
     static void error(int line, string message);
 };
 
-bool Error::hadError=false;
+//bool Error::hadError=false;
 
 #endif

@@ -3,20 +3,23 @@
 #include <list>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <typeinfo>
 #include "tokentype.h"
+#include "token.h"
 #include "scanner.h"
 #include "error.h"
 
 using namespace std;
 
- 
 
 
 
 Scanner::Scanner(string s):source(s)
 {
-    cout<<"Scanner is Called! with source:\n"<<source<<endl;
+    #ifdef TEST_MODE
+    cout<<"\nscanner:"<<__FUNCTION__<<"Source:"<<source<<endl;
+    #endif
 
 keywords.insert(pair<string,TokenType>("and",AND));
 keywords.insert(pair<string,TokenType>("class",CLASS));
@@ -135,9 +138,14 @@ void Scanner::scanToken(){
 void Scanner::identifier(){
     while (isAlphaNumeric(peek())) advance();
     string text = source.substr(start, current);
-   // TokenType type = keywords.at(text);
-    TokenType type =IF;
-    if (type == NULL) type = IDENTIFIER;
+    TokenType type=IDENTIFIER;
+    if(keywords.find(text)==keywords.end()){
+     type = IDENTIFIER; 
+    }else{
+        type = keywords.find(text)->second; 
+    }
+    //TokenType type =IF;
+    
     addToken(type);
 }
 
@@ -161,6 +169,7 @@ void Scanner::astring(){
 bool Scanner::match(char expected){
     if(isAtEnd()) return false;
     if( source.at(current) != expected) return false;
+    return false;
 }
 
 char Scanner::peek(){
