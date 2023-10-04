@@ -73,7 +73,7 @@ class Scanner{
             case '/': 
                 if($this->match('/')){
                     while ($this->peek() != '\n' && !$this->isAtEnd()) $this->advance(); 
-                    continue;
+                    break;
                 }
                 break;
             case ' ':
