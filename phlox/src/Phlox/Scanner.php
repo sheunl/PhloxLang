@@ -1,10 +1,6 @@
 <?php
 namespace Phlox;
 
-require_once "TokenType.php";
-require_once "Token.php";
-require_once "Phlox.php";
-
 use Phlox\Token;
 use Phlox\TokenType;
 use Phlox\Phlox;

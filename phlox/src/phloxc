@@ -1,5 +1,5 @@
 <?php
-include "Phlox.php";
+require "autoloader.php";
 
 use Phlox\Phlox;
 

@@ -1,7 +1,7 @@
 <?php 
 namespace Phlox;
 
-require_once "Scanner.php";
+use Phlox\Scanner;
 
 use Exception;
 
