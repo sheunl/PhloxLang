@@ -1,6 +1,7 @@
 <?php
 namespace Phlox;
 
+use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
 use Phlox\TokenType;
 use Phlox\Expr\Expr;
@@ -45,7 +46,7 @@ class Parser{
 
     private function expression():Expr
     {
-        return $this->equality();
+        return $this->assignment();
     }
 
     private function declaration()
@@ -93,6 +94,24 @@ class Parser{
       $expr = $this->expression();
       $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
       return new Expression($expr);
+    }
+
+    private function assignment() : Expr{
+      $expr = $this->equality();
+
+      if ($this->match(TokenType::EQUAL)){
+        $equals = $this->previous();
+        $value = $this->assignment();
+
+        if (get_class($expr) === "Phlox\Expr\Variable"){
+          $name = ($expr->name);
+          return new Assign($name, $value);
+        }
+
+        $this->error($equals, "Invalid assingement target.");
+      }
+
+      return $expr;
     }
 
     private function equality():Expr

@@ -38,7 +38,8 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     }
 
     public function visitAssignExpr(Assign $expr){
-
+        $value = $this->evaluate($expr->value);
+        $this->getEnvironment()->assign($expr->name, $value);
     }
 
     public function visitBinaryExpr(Binary $expr){
