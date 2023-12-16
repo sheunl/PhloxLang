@@ -4,12 +4,22 @@ namespace Phlox;
 use Phlox\Scanner;
 
 use Exception;
+use Phlox\Parser;
 
 class Phlox{
-
+    private static Interpreter $interpreter;
     public static $hadError = false; 
+    public static $hadRuntimeError = false;
+
+    public function __construct()
+    {
+        if(!isset(self::$interpreter)){
+            self::$interpreter = new Interpreter();
+        }
+    }
 
     public static function main(array $args){
+        self::$interpreter = new Interpreter();
         if (count($args) >2 ){
             echo "Usage: php phlox [script]\n";
             exit();
@@ -31,7 +41,10 @@ class Phlox{
             $source = fread($file,filesize($path));
             self::run($source);
 
-        }catch (Exception $e){
+            if(self::$hadError) exit(65);
+            if(self::$hadRuntimeError) exit(70);
+
+        } catch (Exception $e){
             echo "Error Reading File.\n";
         }
     }
@@ -45,7 +58,7 @@ class Phlox{
                self::run($line);
                self::$hadError = false;
             }
-        }catch(Exception $e){
+        } catch(Exception $e){
             echo "Input Error.\n";
         }
     }
@@ -55,19 +68,43 @@ class Phlox{
         $scanner = new Scanner($source);
         $tokens = $scanner->scanTokens();
 
-        foreach($tokens as $token){
-            echo($token);
-            echo("\n");
-        }
+        // foreach($tokens as $token){
+        //     echo($token);
+        //     echo("\n");
+        // }
+
+        $parser = new Parser($tokens);
+        $expression = $parser->parse();
+
+        if(Phlox::$hadError) return;
+
+        self::$interpreter->interpret($expression);
+        // echo new Ast{}
+
     }
 
-    public static function error(int $line,string $message){
+    public static function error(int $line,string $message)
+    {
         self::report($line,"", $message);
+    }
+
+    public static function runtimeError(RuntimeError $error)
+    {
+        echo $error->getMessage()."\n[line ". '$error->token->line'."]\n";
+        self::$hadRuntimeError = true;
     }
 
     private static function report(int $line, string $where, string $message){
         echo("[line ".$line."] Error".$where.": ".$message);
         self::$hadError = true; //Will PHP allow this, if $hadError was not explicitly set to static?
     }
-    
+
+    public static function error_(Token $token, string $message)
+    {
+        if($token->type == TokenType::EOF){
+            Phlox::report($token->line, " at end", $message);
+        } else {
+            Phlox::report($token->line, " at '". $token->lexeme."'",$message);
+        }
+    }
 }

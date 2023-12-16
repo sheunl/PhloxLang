@@ -70,6 +70,8 @@ class Scanner{
                 if($this->match('/')){
                     while ($this->peek() != '\n' && !$this->isAtEnd()) $this->advance(); 
                     break;
+                } else{
+                    $this->addToken(TokenType::SLASH);
                 }
                 break;
             case ' ':
