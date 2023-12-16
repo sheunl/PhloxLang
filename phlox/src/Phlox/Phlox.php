@@ -74,11 +74,11 @@ class Phlox{
         // }
 
         $parser = new Parser($tokens);
-        $expression = $parser->parse();
+        $statements = $parser->parse();
 
         if(Phlox::$hadError) return;
 
-        self::$interpreter->interpret($expression);
+        self::$interpreter->interpret($statements);
         // echo new Ast{}
 
     }

@@ -8,6 +8,9 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Unary;
 use Phlox\Phlox;
+use Phlox\Stmt\Expression;
+use Phlox\Stmt\Printr;
+use Phlox\Stmt\Stmt;
 use Phlox\Token;
 // use PhpCsFixer\Fixer\PhpTag\EchoTagSyntaxFixer;
 
@@ -23,17 +26,44 @@ class Parser{
     }
 
     public function parse(){
-      try{
-        return $this->expression();
-      } catch (ParzerError $error){
-        return null;
+      $statements = [];
+      while(!$this->isAtEnd()){
+        $statements[] = $this->statement();
       }
+
+      return $statements;
+      // try{
+      //   return $this->expression();
+      // } catch (ParzerError $error){
+      //   return null;
+      // }
     }
 
 
     private function expression():Expr
     {
         return $this->equality();
+    }
+
+    private function statement(): Stmt
+    {
+      if ($this->match(TokenType::PRINT)) return $this->printStatement();
+
+      return $this->expressionStatement();
+    }
+
+    private function printStatement()
+    {
+      $value = $this->expression();
+      $this->consume(TokenType::SEMICOLON, "Expect ';' after value.");
+      return new Printr($value);
+    }
+
+    private function expressionStatement() : Stmt 
+    {
+      $expr = $this->expression();
+      $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+      return new Expression($expr);
     }
 
     private function equality():Expr

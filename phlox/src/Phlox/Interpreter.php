@@ -3,7 +3,8 @@
 namespace Phlox;
 
 use Phlox\Expr\Assign;
-use Phlox\Expr\Visitor;
+use Phlox\Expr\Visitor as ExpressionVisitor;
+use Phlox\Stmt\Visitor as StatementVisitor;
 use Phlox\Expr\Binary;
 use Phlox\Expr\Call;
 use Phlox\TokenType;
@@ -17,9 +18,12 @@ use Phlox\Expr\Super;
 use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
+use Phlox\Stmt\Expression;
+use Phlox\Stmt\Printr;
+use Phlox\Stmt\Stmt;
 use PhpCsFixer\ToolInfo;
 
-class Interpreter implements Visitor{
+class Interpreter implements ExpressionVisitor, StatementVisitor{
     public function visitAssignExpr(Assign $expr){
 
     }
@@ -30,19 +34,19 @@ class Interpreter implements Visitor{
 
         switch($expr->operator->type){
             case TokenType::GREATER:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left > (double) $right;
             case TokenType::GREATER_EQUAL:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left >= (double) $right;
             case TokenType::LESS:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left < (double) $right;
             case TokenType::LESS_EQUAL:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left <= (double) $right;
             case TokenType::MINUS:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left - (double) $right;
             case TokenType::PLUS:
                 if(gettype($left) === 'double' && gettype($right) === 'double') {
@@ -56,10 +60,10 @@ class Interpreter implements Visitor{
                 throw new RuntimeError($expr->operator, "Operands must be two numbers or two strings.");
             break;
             case TokenType::SLASH:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left / (double) $right;
             case TokenType::STAR:
-                $this->checkNumberOperand($expr->operator, $left, $right);
+                $this->_checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left * (double) $right;
             case TokenType::BANG_EQUAL: return ! $this->isEqual($left, $right);
             case TokenType::EQUAL_EQUAL: return $this->isEqual($left, $right);
@@ -80,6 +84,11 @@ class Interpreter implements Visitor{
 
     private function evaluate(Expr $expr) {
         return $expr->accept($this);
+    }
+
+    private function execute(Stmt $stmt)
+    {
+        $stmt->accept($this);
     }
 
     public function visitLiteralExpr(Literal $expr){
@@ -146,6 +155,20 @@ class Interpreter implements Visitor{
         return strval($object);
     }
 
+    public function visitExpressionStmt(Expression $stmt)
+    {
+        $this->evaluate($stmt->expression);
+        return null;
+    }
+
+    public function visitPrintStmt(Printr $stmt)
+    {
+        $value = $this->evaluate($stmt->expression);
+        echo $this->stringify($value);
+        echo "\n";
+        return null;
+    }
+
     public function visitLogicalExpr(Logical $expr){}
     public function visitSetExpr(Set $expr){}
     public function visitSuperExpr(Super $expr){}
@@ -153,12 +176,15 @@ class Interpreter implements Visitor{
     // public function visitUnaryExpr(Unary $expr){}
     public function visitVariableExpr(Variable $expr){}
 
-    public function interpret(Expr $expression)
+    public function interpret(array $statements)
     {
         try {
-            $value = $this->evaluate($expression);
-            print_r($this->stringify($value));
-            print("\n");
+            foreach($statements as $statement){
+                $this->execute($statement);
+            }
+            // $value = $this->evaluate($expression);
+            // print_r($this->stringify($value));
+            // print("\n");
         } catch (RuntimeError $error) {
             Phlox::runtimeError($error);
         }
