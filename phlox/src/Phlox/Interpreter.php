@@ -50,7 +50,7 @@ class Interpreter implements Visitor{
                 }
 
                 if(gettype($left) === 'string' && gettype($right) === 'string'){
-                    return (string) $left + (string) $right;
+                    return (string) $left . (string) $right;
                 }
 
                 throw new RuntimeError($expr->operator, "Operands must be two numbers or two strings.");
@@ -61,7 +61,7 @@ class Interpreter implements Visitor{
             case TokenType::STAR:
                 $this->checkNumberOperand($expr->operator, $left, $right);
                 return (double) $left * (double) $right;
-            case TokenType::BANG_EQUAL: return ! $this->isEqual($left,$right);
+            case TokenType::BANG_EQUAL: return ! $this->isEqual($left, $right);
             case TokenType::EQUAL_EQUAL: return $this->isEqual($left, $right);
         }
 
@@ -157,7 +157,8 @@ class Interpreter implements Visitor{
     {
         try {
             $value = $this->evaluate($expression);
-            print_r($value);
+            print_r($this->stringify($value));
+            print("\n");
         } catch (RuntimeError $error) {
             Phlox::runtimeError($error);
         }

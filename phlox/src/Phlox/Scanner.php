@@ -62,7 +62,7 @@ class Scanner{
             case '+': $this->addToken(TokenType::PLUS); break;
             case ';': $this->addToken(TokenType::SEMICOLON); break;
             case '*': $this->addToken(TokenType::STAR); break;  
-            case '!': $this->addToken($this->match('!') ? TokenType::BANG_EQUAL : TokenType::BANG); break;
+            case '!': $this->addToken($this->match('=') ? TokenType::BANG_EQUAL : TokenType::BANG); break;
             case '=': $this->addToken($this->match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL); break;
             case '<': $this->addToken($this->match('=') ? TokenType::LESS_EQUAL : TokenType::LESS); break;
             case '>': $this->addToken($this->match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER); break;
@@ -124,7 +124,7 @@ class Scanner{
             while ($this->isDigit($this->peek())) $this->advance();
         }
 
-        $this->addToken(TokenType::NUMBER, doubleval(substr($this->source, $this->start, $this->current - 1 )));
+        $this->addToken_G(TokenType::NUMBER, doubleval(substr($this->source, $this->start, $this->current)));
     }
 
     private function string(){
@@ -141,7 +141,7 @@ class Scanner{
         $this->advance();
 
         $value = substr($this->source, $this->start + 1, $this->current - 2);
-        $this->addToken(TokenType::STRING, $value);
+        $this->addToken_G(TokenType::STRING, $value);
 
     }
 
@@ -182,6 +182,6 @@ class Scanner{
     private function addToken_G($type, $literal)
     {
         $text =  substr($this->source,$this->start,$this->current - $this->start);
-        array_push($this->tokens,new Token($type,$text,null,$this->line));
+        array_push($this->tokens,new Token($type,$text,$literal,$this->line));
     }
 }
