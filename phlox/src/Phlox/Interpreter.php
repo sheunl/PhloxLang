@@ -21,9 +21,22 @@ use Phlox\Expr\Variable;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
+use Phlox\Stmt\Var_;
 use PhpCsFixer\ToolInfo;
 
 class Interpreter implements ExpressionVisitor, StatementVisitor{
+
+    private Environment $environment;
+
+    private function getEnvironment():Environment
+    {
+        if (! isset($this->environment)){
+            $this->environment = new Environment();
+        }
+
+        return $this->environment;
+    }
+
     public function visitAssignExpr(Assign $expr){
 
     }
@@ -112,6 +125,10 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    public function visitVariableExpr(Variable $expr)
+    {
+        return $this->environment->get($expr->name);    
+    }
     private function checkNumberOperand(Token $operator, $operand)
     {
         if(gettype($operand) === 'double') return;
@@ -169,12 +186,23 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    public function visitVarStmt(Var_ $stmt)
+    {
+        $value = null;
+        if($stmt->intializer != null){
+            $value = $this->evaluate($stmt->intializer);
+        }
+
+        $this->getEnvironment()->define($stmt->name->lexeme, $value);
+        return null;
+    }
+
     public function visitLogicalExpr(Logical $expr){}
     public function visitSetExpr(Set $expr){}
     public function visitSuperExpr(Super $expr){}
     public function visitThisExpr(This $expr){}
     // public function visitUnaryExpr(Unary $expr){}
-    public function visitVariableExpr(Variable $expr){}
+
 
     public function interpret(array $statements)
     {

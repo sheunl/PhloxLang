@@ -7,10 +7,12 @@ use Phlox\Expr\Expr;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Unary;
+use Phlox\Expr\Variable;
 use Phlox\Phlox;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
+use Phlox\Stmt\Var_;
 use Phlox\Token;
 // use PhpCsFixer\Fixer\PhpTag\EchoTagSyntaxFixer;
 
@@ -28,7 +30,8 @@ class Parser{
     public function parse(){
       $statements = [];
       while(!$this->isAtEnd()){
-        $statements[] = $this->statement();
+        $statements[] = $this->declaration();
+
       }
 
       return $statements;
@@ -43,6 +46,32 @@ class Parser{
     private function expression():Expr
     {
         return $this->equality();
+    }
+
+    private function declaration()
+    {
+      try{
+        if($this->match(TokenType::VAR)) return $this->varDeclaration();
+
+        return $this->statement();
+      } catch (ParzerError $error)
+      {
+        $this->synchronize();
+        return null;
+      }
+    }
+
+    private function varDeclaration() {
+      $name = $this->consume(TokenType::IDENTIFIER, "Expect variable name.");
+
+      $initializer = null;
+      
+      if ($this->match(TokenType::EQUAL)){
+        $initializer = $this->expression();
+      }
+
+      $this->consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+      return new Var_($name, $initializer);
     }
 
     private function statement(): Stmt
@@ -134,6 +163,10 @@ class Parser{
 
       if($this->match(TokenType::NUMBER, TokenType::STRING)){
         return new Literal($this->previous()->literal);
+      }
+
+      if($this->match(TokenType::IDENTIFIER)){
+        return new Variable($this->previous());
       }
 
       if($this->match(TokenType::LEFT_PAREN)){
