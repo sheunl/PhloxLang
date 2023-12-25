@@ -20,9 +20,11 @@ use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\If_;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
+use Phlox\Stmt\While_;
 use PhpCsFixer\ToolInfo;
 
 class Interpreter implements ExpressionVisitor, StatementVisitor{
@@ -130,6 +132,19 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $expr->value;
     }
 
+    public function visitLogicalExpr(Logical $expr)
+    {
+        $left = $this->evaluate($expr->left);
+
+        if($expr->operator->type === TokenType::OR){
+            if ($this->isTruthy($left)) return $left;
+        } else {
+            if (! $this->isTruthy($left)) return $left;
+        }
+
+        return $this->evaluate($expr->right);
+    }
+
     public function visitUnaryExpr(Unary $expr) {
         $right = $this->evaluate($expr->right);
     
@@ -149,7 +164,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitVariableExpr(Variable $expr)
     {
-        return $this->environment->get($expr->name);    
+        return $this->getEnvironment()->get($expr->name);    
     }
     private function checkNumberOperand(Token $operator, $operand)
     {
@@ -166,7 +181,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     private function isTruthy($object):bool
     {
         if ($object === null) return false;
-        if (gettype($object) === 'boolean') $object;
+        if (gettype($object) === 'boolean') return (bool) $object;
         return true;
     }
 
@@ -200,6 +215,17 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    public function visitIfStmt(If_ $statement)
+    {
+        if ($this->isTruthy($this->evaluate($statement->condition))){
+            $this->execute($statement->thenBranch);
+        } else if ($statement->elseBranch !== null) {
+            $this->execute($statement->elseBranch);
+        } 
+
+        return null;
+    }
+
     public function visitPrintStmt(Printr $stmt)
     {
         $value = $this->evaluate($stmt->expression);
@@ -219,7 +245,17 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
-    public function visitLogicalExpr(Logical $expr){}
+    public function visitWhileStmt(While_ $stmt)
+    {
+        while ($this->isTruthy($this->evaluate($stmt->condition)))
+        {
+            $this->execute($stmt->body);
+        }
+
+        return null;
+    }
+
+    // public function visitLogicalExpr(Logical $expr){}
     public function visitSetExpr(Set $expr){}
     public function visitSuperExpr(Super $expr){}
     public function visitThisExpr(This $expr){}

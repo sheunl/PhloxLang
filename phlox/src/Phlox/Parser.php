@@ -7,14 +7,17 @@ use Phlox\TokenType;
 use Phlox\Expr\Expr;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
+use Phlox\Expr\Logical;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Phlox;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\If_;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
+use Phlox\Stmt\While_;
 use Phlox\Token;
 // use PhpCsFixer\Fixer\PhpTag\EchoTagSyntaxFixer;
 
@@ -76,12 +79,88 @@ class Parser{
       return new Var_($name, $initializer);
     }
 
+    private function whileStatement():Stmt
+    {
+      $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+      $condition = $this->expression();
+      $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+      $body = $this->statement();
+
+      return new While_($condition, $body);
+    }
+
     private function statement(): Stmt
     {
+      if ($this->match(TokenType::IF)) return $this->ifStatement();
       if ($this->match(TokenType::PRINT)) return $this->printStatement();
       if ($this->match(TokenType::LEFT_BRACE)) return new Block($this->block());
+      if ($this->match(TokenType::WHILE)) return $this->whileStatement();
+      if ($this->match(TokenType::FOR)) return $this->forStatement();
 
       return $this->expressionStatement();
+    }
+
+    private function forStatement()
+    {
+      $this->consume(TokenType::LEFT_PAREN, "Expect '('after 'for'.");
+
+      $intializer = null;
+
+      if ($this->match(TokenType::SEMICOLON))
+      {
+        $intializer = null;
+      } else if ($this->match(TokenType::VAR))
+      {
+        $intializer = $this->varDeclaration();
+      } else {
+        $intializer = $this->expressionStatement();
+      }
+
+      $condition = null;
+
+      if(! $this->check(TokenType::SEMICOLON)) {
+        $condition = $this->expression();
+      }
+
+      $this->consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+      $increment = null;
+
+      if (!$this->check(TokenType::RIGHT_PAREN)){
+        $increment = $this->expression();
+      }
+
+      $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after for clause.");
+
+      $body = $this->statement();
+
+      if ($increment != null){
+        $body =  new Block( [$body, new Expression($increment)]);
+      }
+
+      if ($condition === null) $condition =  new Literal(true);
+
+      $body = new While_($condition, $body);
+
+      if ($intializer !== null){
+        $body = new Block([$intializer, $body]);
+      }
+
+      return $body;
+    }
+
+    private function ifStatement() : Stmt {
+      $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+      $condition = $this->expression();
+      $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
+
+      $thenBranch = $this->statement();
+      $elseBranch = null;
+      if ($this->match(TokenType::ELSE)){
+        $elseBranch = $this->statement();
+      }
+
+      return new If_($condition, $thenBranch, $elseBranch);
     }
 
     private function block()
@@ -112,7 +191,8 @@ class Parser{
     }
 
     private function assignment() : Expr{
-      $expr = $this->equality();
+      // $expr = $this->equality();
+      $expr = $this->or();
 
       if ($this->match(TokenType::EQUAL)){
         $equals = $this->previous();
@@ -124,6 +204,32 @@ class Parser{
         }
 
         $this->error($equals, "Invalid assingement target.");
+      }
+
+      return $expr;
+    }
+
+    private function or(): Expr 
+    {
+      $expr = $this->and();
+
+      while($this->match(TokenType::OR)){
+        $operator = $this->previous();
+        $right = $this->and();
+        $expr = new Logical($expr, $operator, $right);
+      }
+
+      return $expr;
+    }
+
+    private function and(): Expr
+    {
+      $expr = $this->equality();
+
+      while ($this->match(TokenType::AND)){
+        $operator = $this->previous();
+        $right = $this->equality();
+        $expr = new Logical( $expr, $operator, $right);
       }
 
       return $expr;
