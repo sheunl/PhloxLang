@@ -18,6 +18,7 @@ use Phlox\Expr\Super;
 use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
+use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
@@ -92,6 +93,12 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitGetExpr(Get $expr){}
 
+    public function visitBlockStmt(Block $stmt)
+    {
+      $this->executeBlock($stmt->statements, new Environment($this->getEnvironment()));
+      return null;
+    }
+
     public function visitGroupingExpr(Grouping $expr){
         return $this->evaluate($expr->expression);
     }
@@ -103,6 +110,20 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     private function execute(Stmt $stmt)
     {
         $stmt->accept($this);
+    }
+
+    public function executeBlock(array $statements, Environment $environment) {
+        $previous = $this->getEnvironment();
+
+        try{
+            $this->environment = $environment;
+
+            foreach ($statements as $statement){
+                $this->execute($statement);
+            }
+        } finally {
+            $this->environment = $previous; 
+        }
     }
 
     public function visitLiteralExpr(Literal $expr){

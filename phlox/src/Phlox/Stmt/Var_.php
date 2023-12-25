@@ -20,7 +20,7 @@ class Var_ extends Stmt
   
     //   final Token name;
     //   final Expr initializer;
-    public function __construct(public Token $name, public Expr $intializer){ }
+    public function __construct(public Token $name, public ?Expr $intializer){ }
 
     public function accept(Visitor $visitor){
         return $visitor->visitVarStmt($this);

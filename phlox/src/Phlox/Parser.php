@@ -10,6 +10,7 @@ use Phlox\Expr\Literal;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Phlox;
+use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Printr;
 use Phlox\Stmt\Stmt;
@@ -78,8 +79,22 @@ class Parser{
     private function statement(): Stmt
     {
       if ($this->match(TokenType::PRINT)) return $this->printStatement();
+      if ($this->match(TokenType::LEFT_BRACE)) return new Block($this->block());
 
       return $this->expressionStatement();
+    }
+
+    private function block()
+    {
+      $statements = [];
+
+      while (! $this->check(TokenType::RIGHT_BRACE) && !$this->isAtEnd()) {
+        $statements[] = $this->declaration();
+      }
+
+      $this->consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+
+      return $statements;
     }
 
     private function printStatement()

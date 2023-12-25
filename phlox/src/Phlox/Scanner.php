@@ -101,8 +101,8 @@ class Scanner{
     private function identifier(){
         while($this->isAlphaNumeric($this->peek())) $this->advance();
         // $this->addToken(TokenType::IDENTIFIER);
-        $text = substr($this->source, $this->start, $this->current);
-        $type = in_array($text, array_keys(self::$keywords))?self::$keywords[$text]:null;
+        $text = trim(substr($this->source, $this->start, $this->current - $this->start));
+        $type = in_array($text, array_keys(self::$keywords)) ? self::$keywords[$text] : null;
         if ($type == null) $type = TokenType::IDENTIFIER;
         $this->addToken($type);
     }
