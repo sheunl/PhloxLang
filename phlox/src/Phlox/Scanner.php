@@ -75,11 +75,11 @@ class Scanner{
                 }
                 break;
             case ' ':
-            case '\r':
-            case '\t':
+            case "\r":
+            case "\t":
                 break;
             
-            case '\n':
+            case "\n":
                 $this->line++;
                 break;
 
