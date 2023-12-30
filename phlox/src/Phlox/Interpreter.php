@@ -2,6 +2,7 @@
 
 namespace Phlox;
 
+use PDO;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Visitor as ExpressionVisitor;
 use Phlox\Stmt\Visitor as StatementVisitor;
@@ -18,10 +19,14 @@ use Phlox\Expr\Super;
 use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
+use Phlox\Return_ as PhloxReturn_;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\Function_;
 use Phlox\Stmt\If_;
 use Phlox\Stmt\Printr;
+use Phlox\Stmt\Return_;
+use Phlox\Stmt\ReturnR;
 use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
 use Phlox\Stmt\While_;
@@ -30,12 +35,28 @@ use PhpCsFixer\ToolInfo;
 class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     private Environment $environment;
+    public Environment $globals;
+
 
     private function getEnvironment():Environment
     {
         if (! isset($this->environment)){
-            $this->environment = new Environment();
+            $this->globals = new Environment();
+            $this->environment = $this->globals;
         }
+
+        $this->globals->define("clock", new class {
+            public function arity(){ return 0;}
+
+            public function call(Interpreter $interpreter, array $arguments){
+                return (double) time();
+            }
+
+            public function __toString()
+            {
+                return "<native fn>";
+            }
+        });
 
         return $this->environment;
     }
@@ -90,7 +111,23 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     }
 
     public function visitCallExpr(Call $expr){
-        
+        $callee = $this->evaluate($expr->callee);
+
+        $arguments = [];
+        foreach($expr->arguments as $argument){
+            $arguments [] = $this->evaluate($argument);
+        }
+
+        if (!($callee instanceof LoxCallable)){
+            throw new RuntimeError($expr->paren, "Can only call functions and classes.");
+        }
+
+        $function =  $callee; // (LoxCallable)
+        if (count($arguments) != $function->arity()){
+            throw new RuntimeError($expr->paren, "Expected ".$function->arity()." arguments but got ".count($arguments).".");
+        }
+
+        return $function->call($this, $arguments);
     }
 
     public function visitGetExpr(Get $expr){}
@@ -215,6 +252,13 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    public function visitFunctionStmt(Function_ $stmt)
+    {
+        $function = new LoxFunction($stmt, $this->getEnvironment());
+        $this->environment->define($stmt->name->lexeme, $function);
+        return null;
+    }
+
     public function visitIfStmt(If_ $statement)
     {
         if ($this->isTruthy($this->evaluate($statement->condition))){
@@ -232,6 +276,14 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         echo $this->stringify($value);
         echo "\n";
         return null;
+    }
+
+    public function visitReturnStmt(ReturnR $stmt)
+    {
+        $value = null;
+        if($stmt->value !== null) $value = $this->evaluate($stmt->value);
+
+        throw new PhloxReturn_($value);
     }
 
     public function visitVarStmt(Var_ $stmt)

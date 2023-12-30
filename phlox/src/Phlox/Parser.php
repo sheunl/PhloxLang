@@ -3,6 +3,7 @@ namespace Phlox;
 
 use Phlox\Expr\Assign;
 use Phlox\Expr\Binary;
+use Phlox\Expr\Call;
 use Phlox\TokenType;
 use Phlox\Expr\Expr;
 use Phlox\Expr\Grouping;
@@ -13,8 +14,11 @@ use Phlox\Expr\Variable;
 use Phlox\Phlox;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
+use Phlox\Stmt\Function_;
 use Phlox\Stmt\If_;
 use Phlox\Stmt\Printr;
+use Phlox\Return_;
+use Phlox\Stmt\ReturnR;
 use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
 use Phlox\Stmt\While_;
@@ -56,6 +60,7 @@ class Parser{
     private function declaration()
     {
       try{
+        if($this->match(TokenType::FUN)) return $this->aFunction("function");
         if($this->match(TokenType::VAR)) return $this->varDeclaration();
 
         return $this->statement();
@@ -93,6 +98,7 @@ class Parser{
     {
       if ($this->match(TokenType::IF)) return $this->ifStatement();
       if ($this->match(TokenType::PRINT)) return $this->printStatement();
+      if ($this->match(TokenType::RETURN)) return $this->returnStatement();
       if ($this->match(TokenType::LEFT_BRACE)) return new Block($this->block());
       if ($this->match(TokenType::WHILE)) return $this->whileStatement();
       if ($this->match(TokenType::FOR)) return $this->forStatement();
@@ -183,11 +189,50 @@ class Parser{
       return new Printr($value);
     }
 
+    private function returnStatement()
+    {
+      $keyword = $this->previous();
+      $value = null;
+
+      if (! $this->check(TokenType::SEMICOLON)){
+        $value =  $this->expression();
+      }
+
+      $this->consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+
+      return new ReturnR($keyword, $value);
+    }
+
     private function expressionStatement() : Stmt 
     {
       $expr = $this->expression();
       $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
       return new Expression($expr);
+    }
+
+    private function aFunction(string $kind)
+    {
+      $name = $this->consume(TokenType::IDENTIFIER, "Expect ". $kind." name.");
+      $this->consume(TokenType::LEFT_PAREN, "Expect '(' after ".$kind." name.");
+      $parameter = [];
+
+      if(! $this->check(TokenType::RIGHT_PAREN)){
+        do {
+          if (count($parameter) >= 255){
+            $this->error($this->peek(), "Can't have more than 255 parameters.");
+          }
+
+          $parameter[] = $this->consume(TokenType::IDENTIFIER, "Expect parameter name.");
+        } while($this->match(TokenType::COMMA));
+      }
+      
+      $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+
+      $this->consume(TokenType::LEFT_BRACE, "Expect '{' before ".$kind." body.");
+
+      $body = $this->block();
+
+      return new Function_($name, $parameter, $body);
     }
 
     private function assignment() : Expr{
@@ -293,7 +338,40 @@ class Parser{
         return new Unary($operator, $right);
       }
 
-      return $this->primary();
+      return $this->call();
+    }
+
+    private function finishCall (Expr $callee)
+    {
+      $arguments = [];
+
+      if(! $this->check(TokenType::RIGHT_PAREN)){
+        do {
+          if (count($arguments) >= 255){
+            $this->error($this->peek(), "Can't have more than 255 arguments.");
+          }
+          $arguments[] = $this->expression();
+        } while ($this->match(TokenType::COMMA));
+      }
+
+      $paren = $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+
+      return new Call($callee, $paren, $arguments);
+    }
+
+    private function call():Expr
+    {
+      $expr  = $this->primary();
+
+      while(true){
+        if($this->match(TokenType::LEFT_PAREN)) {
+          $expr = $this->finishCall($expr);
+        } else {
+          break;
+        }
+      }
+
+      return $expr;
     }
 
     private function primary() : Expr {
