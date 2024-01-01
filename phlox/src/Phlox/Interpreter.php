@@ -177,6 +177,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
         $this->getEnvironment()->define($stmt->name->lexeme, null);
 
+        if ($stmt->superclass != null){
+            $this->environment = new Environment($this->getEnvironment());
+            $this->environment->define("super", $stmt->superclass);
+        }
+
         $methods = new Map();
         foreach($stmt->methods as $method){
             $function = new LoxFunction($method, $this->getEnvironment(), $method->name->lexeme === "init");
@@ -184,6 +189,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         }
 
         $klass = new LoxClass($stmt->name->lexeme, $superclass, $methods);
+
+        if ($superclass != null){
+            $this->environment = $this->getEnvironment()->enclosing;        
+        }
+
         $this->getEnvironment()->assign($stmt->name, $klass);
     }
 
@@ -384,7 +394,24 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         ($object)->set($expr->name, $value);
         return $value;
     }
-    public function visitSuperExpr(Super $expr){}
+
+    public function visitSuperExpr(Super $expr)
+    {
+        $distance = $this->locals->get($expr);
+
+        $superclass = $this->getEnvironment()->getAt($distance, "super");
+
+        $object = $this->getEnvironment()->getAt($distance - 1, "this");
+
+        $method = $superclass->findMethod($expr->method->lexeme);
+
+        if ($method === null){
+            throw new RuntimeError($expr->method, "Undefined property '". $expr->method->lexeme."'.");
+        }
+        
+        return $method->bind($object);
+    }
+
     public function visitThisExpr(This $expr){
         return $this->lookUpVariable($expr->keyword, $expr);
     }

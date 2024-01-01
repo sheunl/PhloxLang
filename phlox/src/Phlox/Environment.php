@@ -5,7 +5,7 @@ class Environment
 {
     private $values = [];
 
-    public function __construct(private $enclosing = null){}
+    public function __construct(public $enclosing = null){}
 
     public function define(string $name, $value)
     {

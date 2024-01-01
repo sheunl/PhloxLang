@@ -11,6 +11,7 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\Super;
 use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
@@ -417,6 +418,13 @@ class Parser{
 
       if($this->match(TokenType::NUMBER, TokenType::STRING)){
         return new Literal($this->previous()->literal);
+      }
+
+      if ($this->match(TokenType::SUPER)){
+        $keyword = $this->previous();
+        $this->consume(TokenType::DOT, "Expect '.' after 'super'.");
+        $method = $this->consume(TokenType::IDENTIFIER, "Expect superclass method name.");
+        return new Super($keyword, $method);
       }
 
       if ($this->match(TokenType::THIS)) return new This($this->previous());

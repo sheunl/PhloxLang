@@ -16,6 +16,7 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\Super;
 use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
@@ -70,6 +71,11 @@ class Resolver implements ExprVisitor, StmtVisitor
             $this->resolveExpr($stmt->superclass);
         }
 
+        if ($stmt->superclass != null){
+            $this->beginScope();
+            $this->scopes[0]->put("super", true);
+        }
+
         $this->beginScope();
         $this->scopes[0]->put("this",true);
 
@@ -83,6 +89,8 @@ class Resolver implements ExprVisitor, StmtVisitor
         }
 
         $this->endScope();
+
+        if ($stmt->superclass != null) $this->endScope();
 
         $this->currentClass = $enclosingClass;
         return null;
@@ -201,6 +209,12 @@ class Resolver implements ExprVisitor, StmtVisitor
     {
         $this->resolveExpr($expr->value);
         $this->resolveExpr($expr->object);
+        return null;
+    }
+
+    public function visitSuperExpr(Super $expr)
+    {
+        $this->resolveLocal($expr, $expr->keyword);
         return null;
     }
 
