@@ -403,12 +403,13 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
         $object = $this->getEnvironment()->getAt($distance - 1, "this");
 
-        $method = $superclass->findMethod($expr->method->lexeme);
+        if ($superclass instanceof LoxClass)
+            $method = $superclass->findMethod($expr->method->lexeme);
 
         if ($method === null){
             throw new RuntimeError($expr->method, "Undefined property '". $expr->method->lexeme."'.");
         }
-        
+
         return $method->bind($object);
     }
 

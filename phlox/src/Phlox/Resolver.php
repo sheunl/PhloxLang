@@ -68,6 +68,7 @@ class Resolver implements ExprVisitor, StmtVisitor
         }
 
         if ($stmt->superclass != null){
+            $this->currentClass = ClassType::SUBCLASS;
             $this->resolveExpr($stmt->superclass);
         }
 
@@ -214,6 +215,12 @@ class Resolver implements ExprVisitor, StmtVisitor
 
     public function visitSuperExpr(Super $expr)
     {
+        if($this->currentClass === ClassType::NONE){
+            Phlox::error_($expr->keyword, "Can't use 'super' outside of a class.");
+        } else if ($this->currentClass != ClassType::SUBCLASS) {
+            Phlox::error_($expr->keyword, "Can't use 'super' in a class with no superclass.");
+        }
+
         $this->resolveLocal($expr, $expr->keyword);
         return null;
     }
