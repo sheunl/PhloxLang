@@ -2,9 +2,20 @@
 
 namespace Phlox;
 
+use Phlox\DS\Map;
+
 class LoxClass implements LoxCallable
 {
-    public function __construct(public string $name){}
+    public function __construct(public string $name, private Map $methods){}
+
+    public function findMethod(string $name)
+    {
+        if($this->methods->hasKey($name)){
+            return $this->methods->get($name);
+        }
+
+        return null;
+    }
 
     public function __toString():string
     {

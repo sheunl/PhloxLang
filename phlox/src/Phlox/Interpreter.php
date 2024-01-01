@@ -167,7 +167,14 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     public function visitClassStmt(AClass $stmt)
     {
         $this->getEnvironment()->define($stmt->name->lexeme, null);
-        $klass = new LoxClass($stmt->name->lexeme);
+
+        $methods = new Map();
+        foreach($stmt->methods as $method){
+            $function = new LoxFunction($method, $this->getEnvironment());
+            $methods->put($method->name->lexeme, $function);
+        }
+
+        $klass = new LoxClass($stmt->name->lexeme, $methods);
         $this->getEnvironment()->assign($stmt->name, $klass);
     }
 

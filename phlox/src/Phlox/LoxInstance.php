@@ -29,6 +29,9 @@ class LoxInstance
             return $this->getFields()->get($name->lexeme);
         }
 
+        $method = $this->klass->findMethod($name->lexeme);
+        if($method != null) return $method;
+
         throw new RuntimeError($name, "Undefined property '". $name->lexeme. "'.");
     }
 
