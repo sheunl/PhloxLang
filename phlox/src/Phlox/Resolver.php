@@ -11,9 +11,11 @@ use Phlox\Expr\Call;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Stmt;
 use Phlox\Expr\Expr;
+use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\AClass;
@@ -135,6 +137,12 @@ class Resolver implements ExprVisitor, StmtVisitor
         return null;
     }
 
+    public function visitGetExpr(Get $expr)
+    {
+        $this->resolveExpr($expr->object);
+        return null;
+    }
+
     public function visitGroupingExpr(Grouping $expr)
     {
         $this->resolveExpr($expr->expression);
@@ -151,6 +159,14 @@ class Resolver implements ExprVisitor, StmtVisitor
         $this->resolveExpr($expr->left);
         $this->resolveExpr($expr->right);
 
+        return null;
+    }
+
+
+    public function visitSetExpr(Set $expr)
+    {
+        $this->resolveExpr($expr->value);
+        $this->resolveExpr($expr->object);
         return null;
     }
 

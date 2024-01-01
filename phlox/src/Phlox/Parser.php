@@ -6,9 +6,11 @@ use Phlox\Expr\Binary;
 use Phlox\Expr\Call;
 use Phlox\TokenType;
 use Phlox\Expr\Expr;
+use Phlox\Expr\Get;
 use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
+use Phlox\Expr\Set;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Phlox;
@@ -264,6 +266,9 @@ class Parser{
         if (get_class($expr) === "Phlox\Expr\Variable"){
           $name = ($expr->name);
           return new Assign($name, $value);
+        } else if ($expr instanceof Get) {
+          $get = $expr;
+          return new Set($get->object, $get->name, $value);
         }
 
         $this->error($equals, "Invalid assingement target.");
@@ -384,7 +389,11 @@ class Parser{
       while(true){
         if($this->match(TokenType::LEFT_PAREN)) {
           $expr = $this->finishCall($expr);
-        } else {
+        } else if ($this->match(TokenType::DOT)){
+          $name = $this->consume(TokenType::IDENTIFIER, "Expect property name after '.'.");
+          $expr = new Get($expr, $name);
+        }
+        else {
           break;
         }
       }

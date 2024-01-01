@@ -148,7 +148,15 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $function->call($this, $arguments);
     }
 
-    // public function visitGetExpr(Get $expr){}
+    public function visitGetExpr(Get $expr){
+        $object = $this->evaluate($expr->object);
+
+        if($object instanceof LoxInstance){
+            return $object->get($expr->name);
+        }
+
+        throw new RuntimeError($expr->name, "Only instances have properties");
+    }
 
     public function visitBlockStmt(Block $stmt)
     {
@@ -350,7 +358,17 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     }
 
     // public function visitLogicalExpr(Logical $expr){}
-    public function visitSetExpr(Set $expr){}
+    public function visitSetExpr(Set $expr){
+        $object = $this->evaluate($expr->object);
+
+        if(!($object instanceof LoxInstance)){
+            throw new RuntimeError($expr->name, "Only instances have fields.");
+        }
+
+        $value = $this->evaluate($expr->value);
+        ($object)->set($expr->name, $value);
+        return $value;
+    }
     public function visitSuperExpr(Super $expr){}
     public function visitThisExpr(This $expr){}
     // public function visitUnaryExpr(Unary $expr){}
