@@ -78,6 +78,11 @@ class Phlox{
 
         if(Phlox::$hadError) return;
 
+        $resolver = new Resolver(self::$interpreter);
+        $resolver->resolve($statements);
+
+        if(Phlox::$hadError) return;
+
         self::$interpreter->interpret($statements);
         // echo new Ast{}
 

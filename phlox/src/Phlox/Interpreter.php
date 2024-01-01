@@ -3,6 +3,7 @@
 namespace Phlox;
 
 use PDO;
+use Phlox\DS\Map;
 use Phlox\Expr\Assign;
 use Phlox\Expr\Visitor as ExpressionVisitor;
 use Phlox\Stmt\Visitor as StatementVisitor;
@@ -36,7 +37,17 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     private Environment $environment;
     public Environment $globals;
+    private Map $locals;
+    public $test = 88487383;
 
+    private function getInterpreterLocals():Map
+    {
+        if(!isset($this->locals)){
+            $this->locals = new Map();
+        }
+
+        return $this->locals;
+    }
 
     private function getEnvironment():Environment
     {
@@ -63,7 +74,13 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitAssignExpr(Assign $expr){
         $value = $this->evaluate($expr->value);
-        $this->getEnvironment()->assign($expr->name, $value);
+        // $this->getEnvironment()->assign($expr->name, $value);
+        $distance = $this->getInterpreterLocals()->get($expr);
+        if($distance != null){
+            $this->getEnvironment()->assignAt($distance, $expr->name, $value);
+        } else {
+            $this->globals->assign($expr->name, $value);
+        }
     }
 
     public function visitBinaryExpr(Binary $expr){
@@ -130,7 +147,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $function->call($this, $arguments);
     }
 
-    public function visitGetExpr(Get $expr){}
+    // public function visitGetExpr(Get $expr){}
 
     public function visitBlockStmt(Block $stmt)
     {
@@ -151,17 +168,22 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         $stmt->accept($this);
     }
 
+    function resolve(Expr $expr, int $depth)
+    {
+        $this->getInterpreterLocals()->put($expr, $depth);
+    }
+
     public function executeBlock(array $statements, Environment $environment) {
         $previous = $this->getEnvironment();
 
         try{
-            $this->environment = $environment;
+            $this->environment =  $environment;
 
             foreach ($statements as $statement){
                 $this->execute($statement);
             }
         } finally {
-            $this->environment = $previous; 
+            $this->environment =  $previous; 
         }
     }
 
@@ -201,8 +223,20 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitVariableExpr(Variable $expr)
     {
-        return $this->getEnvironment()->get($expr->name);    
+        // return $this->getEnvironment()->get($expr->name);
+        return $this->lookUpVariable($expr->name, $expr);    
     }
+
+    private function lookUpVariable(Token $name, Expr $expr)
+    {
+        $distance = $this->getInterpreterLocals()->get($expr);
+        if($distance !== null) {
+            return $this->getEnvironment()->getAt($distance, $name->lexeme); //checj=
+        } else { 
+            return $this->globals->get($name);
+        }
+    }
+
     private function checkNumberOperand(Token $operator, $operand)
     {
         if(gettype($operand) === 'double') return;
@@ -255,7 +289,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     public function visitFunctionStmt(Function_ $stmt)
     {
         $function = new LoxFunction($stmt, $this->getEnvironment());
-        $this->environment->define($stmt->name->lexeme, $function);
+        $this->getEnvironment()->define($stmt->name->lexeme, $function);
         return null;
     }
 

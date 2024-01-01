@@ -5,6 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "Lox",
+            "request": "launch",
+            "mainClass": "com.craftinginterpreters.lox.Lox",
+            "projectName": "Compiler_Tests_c74f079a",
+            "args": ["phlox/src/test/testfunction3.phlox"]
+        },
+        {
+            "type": "java",
+            "name": "Launch External Terminal",
+            "request": "launch",
+            "console": "externalTerminal",
+            "mainClass": ""
+        },
+        {
+            "type": "java",
+            "name": "Attach",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "<debug port of the debuggee>"
+        },
+        {
+            "type": "java",
+            "name": "Attach to Remote Program",
+            "request": "attach",
+            "hostName": "<The host name or ip address of remote debuggee>",
+            "port": "<debug port of remote debuggee>"
+        },
+        {
+            "type": "java",
+            "request": "attach",
+            "name": "Attach by Process ID",
+            "processId": "${command:PickJavaProcess}"
+        },
+        {
             "name": "Listen for Xdebug",
             "type": "php",
             "request": "launch",

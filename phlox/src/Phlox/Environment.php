@@ -12,6 +12,28 @@ class Environment
         $this->values[$name] = $value;
     }
 
+    function ancestor(int $distance):Environment
+    {
+        $environment = $this;
+
+        for ($i = 0; $i < $distance; $i++)
+        {
+            $environment = $environment->enclosing;
+        }
+
+        return $environment;
+    }
+
+    function assignAt(int $distance, Token $name, $value)
+    {
+        $this->ancestor($distance)->values[$name->lexeme] = $value;
+    }
+
+    function getAt(int $distance, string $name)
+    {
+        return $this->ancestor($distance)->values[$name];
+    }
+
     public function get(Token $name) {
         if(in_array($name->lexeme, array_keys($this->values))) {
             return $this->values[$name->lexeme];
