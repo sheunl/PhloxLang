@@ -21,6 +21,7 @@ use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Return_ as PhloxReturn_;
+use Phlox\Stmt\AClass;
 use Phlox\Stmt\Block;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Function_;
@@ -153,6 +154,13 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     {
       $this->executeBlock($stmt->statements, new Environment($this->getEnvironment()));
       return null;
+    }
+
+    public function visitClassStmt(AClass $stmt)
+    {
+        $this->getEnvironment()->define($stmt->name->lexeme, null);
+        $klass = new LoxClass($stmt->name->lexeme);
+        $this->getEnvironment()->assign($stmt->name, $klass);
     }
 
     public function visitGroupingExpr(Grouping $expr){

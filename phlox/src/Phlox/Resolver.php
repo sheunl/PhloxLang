@@ -16,6 +16,7 @@ use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
+use Phlox\Stmt\AClass;
 use Phlox\Stmt\Expression;
 use Phlox\Stmt\Function_;
 use Phlox\Stmt\If_;
@@ -46,6 +47,13 @@ class Resolver implements ExprVisitor, StmtVisitor
         $this->resolve($statement->statements);
         $this->endScope();
 
+        return null;
+    }
+
+    public function visitClassStmt(AClass $stmt)
+    {
+        $this->declare($stmt->name);
+        $this->define($stmt->name);
         return null;
     }
 

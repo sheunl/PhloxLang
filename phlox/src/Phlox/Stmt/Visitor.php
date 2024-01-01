@@ -11,4 +11,5 @@ interface Visitor{
     public function visitWhileStmt(While_ $statement);
     public function visitFunctionStmt(Function_ $stmt);
     public function visitReturnStmt(ReturnR $stmt);
+    public function visitClassStmt(AClass $stmt);
 }

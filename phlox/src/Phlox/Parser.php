@@ -18,6 +18,7 @@ use Phlox\Stmt\Function_;
 use Phlox\Stmt\If_;
 use Phlox\Stmt\Printr;
 use Phlox\Return_;
+use Phlox\Stmt\AClass;
 use Phlox\Stmt\ReturnR;
 use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
@@ -60,6 +61,7 @@ class Parser{
     private function declaration()
     {
       try{
+        if ($this->match(TokenType::ACLASS)) return $this->classDeclaration();
         if($this->match(TokenType::FUN)) return $this->aFunction("function");
         if($this->match(TokenType::VAR)) return $this->varDeclaration();
 
@@ -69,6 +71,22 @@ class Parser{
         $this->synchronize();
         return null;
       }
+    }
+
+    private function classDeclaration()
+    {
+      $name = $this->consume(TokenType::IDENTIFIER, "Expect class name");
+      $this->consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
+      
+      $methods = [];
+
+      while(! $this->check(TokenType::RIGHT_BRACE) && ! $this->isAtEnd()){
+        $methods[] = $this->aFunction("method");
+      }
+
+      $this->consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
+
+      return new AClass($name, $methods);
     }
 
     private function varDeclaration() {
