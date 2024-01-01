@@ -2,13 +2,14 @@
  
  namespace Phlox\Stmt;
 
+use Phlox\Expr\Expr;
 use Phlox\Expr\Variable;
 use Phlox\Token;
 
 class AClass extends Stmt
 {
 
-    public function __construct(public Token $name, public ?array $methods = null){}
+    public function __construct(public Token $name, public ?Variable $superclass,  public ?array $methods = null){}
 
     public function accept(Visitor $visitor)
     {

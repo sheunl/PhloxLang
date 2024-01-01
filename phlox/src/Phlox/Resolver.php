@@ -62,6 +62,14 @@ class Resolver implements ExprVisitor, StmtVisitor
         $this->declare($stmt->name);
         $this->define($stmt->name);
 
+        if ($stmt->superclass != null && $stmt->name->lexeme === $stmt->superclass->name->lexeme){
+            Phlox::error_($stmt->superclass->name, "A class can't inherit from itself.");
+        }
+
+        if ($stmt->superclass != null){
+            $this->resolveExpr($stmt->superclass);
+        }
+
         $this->beginScope();
         $this->scopes[0]->put("this",true);
 

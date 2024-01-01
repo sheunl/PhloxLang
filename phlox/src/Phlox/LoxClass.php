@@ -6,12 +6,16 @@ use Phlox\DS\Map;
 
 class LoxClass implements LoxCallable
 {
-    public function __construct(public string $name, private Map $methods){}
+    public function __construct(public string $name, public ?LoxClass $superclass, private Map $methods){}
 
     public function findMethod(string $name)
     {
         if($this->methods->hasKey($name)){
             return $this->methods->get($name);
+        }
+
+        if($this->superclass != null){
+            return $this->superclass->findMethod($name);
         }
 
         return null;

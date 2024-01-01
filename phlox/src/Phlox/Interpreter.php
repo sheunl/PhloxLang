@@ -166,6 +166,15 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitClassStmt(AClass $stmt)
     {
+        $superclass = null;
+
+        if($stmt->superclass != null){
+            $superclass = $this->evaluate($stmt->superclass);
+            if(!($superclass instanceof LoxClass)) {
+                throw new RuntimeError($stmt->superclass->name, "Superclass must be a class.");
+            }
+        }
+
         $this->getEnvironment()->define($stmt->name->lexeme, null);
 
         $methods = new Map();
@@ -174,7 +183,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
             $methods->put($method->name->lexeme, $function);
         }
 
-        $klass = new LoxClass($stmt->name->lexeme, $methods);
+        $klass = new LoxClass($stmt->name->lexeme, $superclass, $methods);
         $this->getEnvironment()->assign($stmt->name, $klass);
     }
 
