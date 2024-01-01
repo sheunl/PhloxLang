@@ -170,7 +170,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
         $methods = new Map();
         foreach($stmt->methods as $method){
-            $function = new LoxFunction($method, $this->getEnvironment());
+            $function = new LoxFunction($method, $this->getEnvironment(), $method->name->lexeme === "init");
             $methods->put($method->name->lexeme, $function);
         }
 
@@ -311,7 +311,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
 
     public function visitFunctionStmt(Function_ $stmt)
     {
-        $function = new LoxFunction($stmt, $this->getEnvironment());
+        $function = new LoxFunction($stmt, $this->getEnvironment(), false);
         $this->getEnvironment()->define($stmt->name->lexeme, $function);
         return null;
     }
@@ -364,7 +364,6 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
-    // public function visitLogicalExpr(Logical $expr){}
     public function visitSetExpr(Set $expr){
         $object = $this->evaluate($expr->object);
 
@@ -377,7 +376,9 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $value;
     }
     public function visitSuperExpr(Super $expr){}
-    public function visitThisExpr(This $expr){}
+    public function visitThisExpr(This $expr){
+        return $this->lookUpVariable($expr->keyword, $expr);
+    }
     // public function visitUnaryExpr(Unary $expr){}
 
 

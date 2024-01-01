@@ -12,7 +12,7 @@ interface Visitor{
     public function visitLogicalExpr(Logical $expr);
     public function visitSetExpr(Set $expr);
     // public function visitSuperExpr(Super $expr);
-    // public function visitThisExpr(This $expr);
+    public function visitThisExpr(This $expr);
     public function visitUnaryExpr(Unary $expr);
     public function visitVariableExpr(Variable $expr);
 }

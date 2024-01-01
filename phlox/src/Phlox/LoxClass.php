@@ -22,14 +22,24 @@ class LoxClass implements LoxCallable
         return $this->name;
     }
 
-    public function call(Interpreter $interpreter, array $argument)
+    public function call(Interpreter $interpreter, array $arguments)
     {
         $instance = new LoxInstance($this);
+
+        $intializer = $this->findMethod("init");
+        if($intializer != null)
+        {
+            $intializer->bind($instance)->call($interpreter, $arguments);
+        }
+
         return $instance;
     }
 
     public function arity():int
     {
-        return 0;
+        $initializer = $this->findMethod("init");
+        if ($initializer == null) return 0;
+
+        return $initializer->arity();
     }
 }

@@ -30,14 +30,14 @@ class LoxInstance
         }
 
         $method = $this->klass->findMethod($name->lexeme);
-        if($method != null) return $method;
+        if($method != null) return $method->bind($this);
 
         throw new RuntimeError($name, "Undefined property '". $name->lexeme. "'.");
     }
 
-    function set (Token $name, object $value)
+    function set (Token $name, ?object $value)
     {
-        $this->fields->put($name->lexeme, $value);
+        $this->getFields()->put($name->lexeme, $value);
     }
 
     public function __toString()

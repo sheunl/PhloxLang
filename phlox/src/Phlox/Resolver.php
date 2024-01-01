@@ -16,6 +16,7 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Stmt\AClass;
@@ -33,6 +34,7 @@ class Resolver implements ExprVisitor, StmtVisitor
     private Interpreter $interpreter;
 
     private $currentFunction = FunctionType::NONE;
+    private $currentClass = ClassType::NONE;
 
     public function __construct(Interpreter $interpreter = null){
         if($interpreter === null){
@@ -54,14 +56,27 @@ class Resolver implements ExprVisitor, StmtVisitor
 
     public function visitClassStmt(AClass $stmt)
     {
+        $enclosingClass = $this->currentClass;
+        $this->currentClass = ClassType::ACLASS;
+
         $this->declare($stmt->name);
         $this->define($stmt->name);
 
+        $this->beginScope();
+        $this->scopes[0]->put("this",true);
+
         foreach($stmt->methods as $method){
             $declaration = FunctionType::METHOD;
+            if ($method->name->lexeme === "init"){
+                $declaration = FunctionType::INITIALIZER;
+            }
+
             $this->resolveFunction($method, $declaration);
         }
 
+        $this->endScope();
+
+        $this->currentClass = $enclosingClass;
         return null;
     }
 
@@ -93,6 +108,11 @@ class Resolver implements ExprVisitor, StmtVisitor
         }
 
         if ($stmt->value != null){
+
+            if($this->currentFunction === FunctionType::INITIALIZER){
+                Phlox::error_($stmt->keyword, "Can't return a value from an initializer.");
+            }
+
             $this->resolveExpr($stmt->value);
         }
     }
@@ -173,6 +193,18 @@ class Resolver implements ExprVisitor, StmtVisitor
     {
         $this->resolveExpr($expr->value);
         $this->resolveExpr($expr->object);
+        return null;
+    }
+
+    public function visitThisExpr(This $expr)
+    {
+        if ($this->currentClass === ClassType::NONE){
+            Phlox::error_($expr->keyword, "Can't use 'this' outside of a class.");
+            return null;
+        }
+
+        $this->resolveLocal($expr, $expr->keyword);
+        
         return null;
     }
 

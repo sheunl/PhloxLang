@@ -11,6 +11,7 @@ use Phlox\Expr\Grouping;
 use Phlox\Expr\Literal;
 use Phlox\Expr\Logical;
 use Phlox\Expr\Set;
+use Phlox\Expr\This;
 use Phlox\Expr\Unary;
 use Phlox\Expr\Variable;
 use Phlox\Phlox;
@@ -402,6 +403,7 @@ class Parser{
     }
 
     private function primary() : Expr {
+      
       if ($this->match(TokenType::FALSE)) return new Literal(false);
       if ($this->match(TokenType::TRUE)) return new Literal(true);
       if ($this->match(TokenType::NIL)) return new Literal(null);
@@ -409,6 +411,8 @@ class Parser{
       if($this->match(TokenType::NUMBER, TokenType::STRING)){
         return new Literal($this->previous()->literal);
       }
+
+      if ($this->match(TokenType::THIS)) return new This($this->previous());
 
       if($this->match(TokenType::IDENTIFIER)){
         return new Variable($this->previous());
