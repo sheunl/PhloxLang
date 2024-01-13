@@ -1,6 +1,12 @@
 {
+    "autoload":{
+        "classmap":[
+            "src/"
+        ]
+    },
     "require-dev": {
         "phpstan/phpstan": "^1.10",
-        "friendsofphp/php-cs-fixer": "^3.37"
+        "friendsofphp/php-cs-fixer": "^3.37",
+        "phpunit/phpunit": "^10"
     }
 }
