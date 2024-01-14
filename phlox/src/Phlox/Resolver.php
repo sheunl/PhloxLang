@@ -338,7 +338,7 @@ class Resolver implements ExprVisitor, StmtVisitor
 
     private function resolveLocal(Expr $expr, Token $name)
     {
-        for($i = (count($this->scopes) - 1 ); $i >= 0; $i --){
+        for($i = (count($this->scopes) - 1 ); $i >= 0; $i--){
             if($this->scopes[$i]->hasKey($name->lexeme)){
                 $this->interpreter->resolve($expr, count($this->scopes) - 1 - $i);
                 return;

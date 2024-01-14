@@ -32,7 +32,11 @@ class Map
 
     private function generateKey($item)
     {
-        return Hash('sha256', print_r($item, true));
+        if(gettype($item) === 'object'){
+            return spl_object_hash($item);
+        }
+        
+        return Hash('sha256', $item);
     }
 
     public function hasKey($key): bool

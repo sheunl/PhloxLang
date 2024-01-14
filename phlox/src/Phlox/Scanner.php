@@ -11,7 +11,7 @@ class Scanner{
 
     private $start = 0;
     private $current = 0;
-    private $line = 0; 
+    private $line = 1; 
 
     private static $keywords= [
         "and" => TokenType::AND,

@@ -10,7 +10,7 @@
             "request": "launch",
             "mainClass": "com.craftinginterpreters.lox.Lox",
             "projectName": "Compiler_Tests_c74f079a",
-            "args": ["phlox/src/test/testfunction3.phlox"]
+            "args": ["phlox/test/test_programs/forloop.phlox"]
         },
         {
             "type": "java",
