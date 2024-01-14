@@ -77,7 +77,7 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         $value = $this->evaluate($expr->value);
         // $this->getEnvironment()->assign($expr->name, $value);
         $distance = $this->getInterpreterLocals()->get($expr);
-        if($distance != null){
+        if($distance !== null){
             $this->getEnvironment()->assignAt($distance, $expr->name, $value);
         } else {
             $this->globals->assign($expr->name, $value);

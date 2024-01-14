@@ -35,7 +35,7 @@ class LoxInstance
         throw new RuntimeError($name, "Undefined property '". $name->lexeme. "'.");
     }
 
-    function set (Token $name, ?object $value)
+    function set(Token $name, $value)
     {
         $this->getFields()->put($name->lexeme, $value);
     }
