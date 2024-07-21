@@ -41,6 +41,23 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     private Map $locals;
     public $test = 88487383;
 
+    public function __construct()
+    {
+        $this->globals = new Environment();
+        $this->globals->define("clock", new class implements LoxCallable{
+            public function arity(): int{ return 0;}
+
+            public function call(Interpreter $interpreter, array $arguments){
+                return (double) time();
+            }
+
+            public function __toString()
+            {
+                return "<native fn>";
+            }
+        });
+    }
+
     private function getInterpreterLocals():Map
     {
         if(!isset($this->locals)){
@@ -53,22 +70,8 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
     private function getEnvironment():Environment
     {
         if (! isset($this->environment)){
-            $this->globals = new Environment();
             $this->environment = $this->globals;
         }
-
-        $this->globals->define("clock", new class {
-            public function arity(){ return 0;}
-
-            public function call(Interpreter $interpreter, array $arguments){
-                return (double) time();
-            }
-
-            public function __toString()
-            {
-                return "<native fn>";
-            }
-        });
 
         return $this->environment;
     }
