@@ -1,3 +1,4 @@
 tests/*
 notes/*
 *.phlox
+.cache

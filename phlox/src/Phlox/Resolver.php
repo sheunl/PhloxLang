@@ -74,11 +74,11 @@ class Resolver implements ExprVisitor, StmtVisitor
 
         if ($stmt->superclass != null){
             $this->beginScope();
-            $this->scopes[0]->put("super", true);
+            $this->scopes[count($this->scopes) - 1]->put("super", true);
         }
 
         $this->beginScope();
-        $this->scopes[0]->put("this",true);
+        $this->scopes[count($this->scopes) - 1]->put("this",true);
 
         foreach($stmt->methods as $method){
             $declaration = FunctionType::METHOD;
@@ -254,7 +254,7 @@ class Resolver implements ExprVisitor, StmtVisitor
 
     public function visitVariableExpr(Variable $expr)
     {
-        if(count($this->scopes) && null !== $this->scopes[0]->get($expr->name->lexeme) && $this->scopes[0]->get($expr->name->lexeme) === false){
+        if(count($this->scopes) && null !== $this->scopes[count($this->scopes) - 1]->get($expr->name->lexeme) && $this->scopes[count($this->scopes) - 1]->get($expr->name->lexeme) === false){
             Phlox::error_($expr->name, "Can't read local variable in its own initializer.");
         }
 
@@ -317,7 +317,7 @@ class Resolver implements ExprVisitor, StmtVisitor
     {
         if (count($this->scopes) === 0) return;
 
-        $scope = $this->scopes[0];
+        $scope = $this->scopes[count($this->scopes) - 1];
 
         if($scope->hasKey($name->lexeme)){
             Phlox::error_($name, "Already a variable with this name in this scope.");
@@ -333,12 +333,12 @@ class Resolver implements ExprVisitor, StmtVisitor
     {
         if(count($this->scopes) === 0) return;
 
-        $this->scopes[0]->put($name->lexeme ,true);
+        $this->scopes[count($this->scopes) - 1]->put($name->lexeme ,true);
     }
 
     private function resolveLocal(Expr $expr, Token $name)
     {
-        for($i = (count($this->scopes) - 1 ); $i >= 0; $i --){
+        for($i = (count($this->scopes) - 1 ); $i >= 0; $i--){
             if($this->scopes[$i]->hasKey($name->lexeme)){
                 $this->interpreter->resolve($expr, count($this->scopes) - 1 - $i);
                 return;
