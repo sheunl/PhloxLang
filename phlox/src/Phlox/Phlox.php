@@ -68,11 +68,6 @@ class Phlox{
         $scanner = new Scanner($source);
         $tokens = $scanner->scanTokens();
 
-        // foreach($tokens as $token){
-        //     echo($token);
-        //     echo("\n");
-        // }
-
         $parser = new Parser($tokens);
         $statements = $parser->parse();
 
