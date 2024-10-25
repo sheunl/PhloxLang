@@ -58,6 +58,9 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         });
     }
 
+    /**
+     * @return Map
+     */
     private function getInterpreterLocals():Map
     {
         if(!isset($this->locals)){

@@ -2,23 +2,43 @@
 
 namespace Phlox\DS;
 
+/**
+ * Custom Map Data structure. 
+ */
 class Map
 {
     private array $item_left = [];
     private array $item_right = [];
 
+    /**
+     */
     public function __construct (){
 
     }
 
-    public function put($item_l, $item_r)
+    /**
+     * Add the items into the Map data structure
+     * 
+     * @param array $item_l
+     * @param array $item_r
+     * 
+     * @return void
+     */
+    public function put(array $item_l,array $item_r): void
     {
      $generatedKey = $this->generateKey($item_l);
      $this->item_left[$generatedKey] = $item_l;
      $this->item_right[$generatedKey] = $item_r;  
     }
 
-    public function get($item_l)
+    /**
+     * Get the items from the Map data structure
+     * 
+     * @param array $item_l
+     * 
+     * @return mixed
+     */
+    public function get(array $item_l): mixed
     {
         $generatedKey = $this->generateKey($item_l);
 
@@ -30,7 +50,14 @@ class Map
         
     }
 
-    private function generateKey($item)
+    /**
+     * Convert item in hashkey
+     * 
+     * @param mixed $item
+     * 
+     * @return mixed
+     */
+    private function generateKey(mixed $item): mixed
     {
         if(gettype($item) === 'object'){
             return spl_object_hash($item);
@@ -39,7 +66,14 @@ class Map
         return Hash('sha256', $item);
     }
 
-    public function hasKey($key): bool
+    /**
+     * Check if item exist
+     * 
+     * @param mixed $key
+     * 
+     * @return bool
+     */
+    public function hasKey(mixed $key): bool
     {
         return in_array($this->generateKey($key), array_keys($this->item_left));
     }
