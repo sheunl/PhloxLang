@@ -28,19 +28,38 @@ use Phlox\Stmt\Stmt;
 use Phlox\Stmt\Var_;
 use Phlox\Stmt\While_;
 use Phlox\Token;
-// use PhpCsFixer\Fixer\PhpTag\EchoTagSyntaxFixer;
 
-// use function PHPSTORM_META\type;
 
+/**
+ * Parser class handles the parsing of tokens into an abstract syntax tree
+ * It implements recursive descent parsing for the Phlox language
+ */
 class Parser{
+    /**
+     * Array of tokens to be parsed
+     * @var array
+     */
     private array $tokens;
+    
+    /**
+     * Current position in the token array
+     * @var int
+     */
     private int $current = 0;
 
+    /**
+     * Initialize parser with array of tokens
+     * @param array $tokens Array of Token objects to parse
+     */
     public function __construct(array $tokens)
     {
         $this->tokens = $tokens;
     }
 
+    /**
+     * Parse tokens into array of statements
+     * @return array Array of parsed statements
+     */
     public function parse(){
       $statements = [];
       while(!$this->isAtEnd()){
@@ -49,19 +68,22 @@ class Parser{
       }
 
       return $statements;
-      // try{
-      //   return $this->expression();
-      // } catch (ParzerError $error){
-      //   return null;
-      // }
+   
     }
 
-
+    /**
+     * Parse an expression
+     * @return Expr The parsed expression
+     */
     private function expression():Expr
     {
         return $this->assignment();
     }
 
+    /**
+     * Parse a declaration statement
+     * @return Stmt|null The parsed declaration statement
+     */
     private function declaration()
     {
       try{
@@ -77,6 +99,10 @@ class Parser{
       }
     }
 
+    /**
+     * Parse a class declaration
+     * @return AClass The parsed class declaration
+     */
     private function classDeclaration()
     {
       $name = $this->consume(TokenType::IDENTIFIER, "Expect class name");
@@ -100,6 +126,10 @@ class Parser{
       return new AClass($name, $superclass, $methods);
     }
 
+    /**
+     * Parse a variable declaration
+     * @return Var_ The parsed variable declaration
+     */
     private function varDeclaration() {
       $name = $this->consume(TokenType::IDENTIFIER, "Expect variable name.");
 
@@ -113,6 +143,10 @@ class Parser{
       return new Var_($name, $initializer);
     }
 
+    /**
+     * Parse a while statement
+     * @return Stmt The parsed while statement
+     */
     private function whileStatement():Stmt
     {
       $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
@@ -123,6 +157,10 @@ class Parser{
       return new While_($condition, $body);
     }
 
+    /**
+     * Parse a statement
+     * @return Stmt The parsed statement
+     */
     private function statement(): Stmt
     {
       if ($this->match(TokenType::IF)) return $this->ifStatement();
@@ -135,6 +173,10 @@ class Parser{
       return $this->expressionStatement();
     }
 
+    /**
+     * Parse a for statement and convert it to equivalent while statement
+     * @return Stmt The parsed for statement as a while statement
+     */
     private function forStatement()
     {
       $this->consume(TokenType::LEFT_PAREN, "Expect '('after 'for'.");
@@ -184,6 +226,10 @@ class Parser{
       return $body;
     }
 
+    /**
+     * Parse an if statement
+     * @return Stmt The parsed if statement
+     */
     private function ifStatement() : Stmt {
       $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
       $condition = $this->expression();
@@ -198,6 +244,10 @@ class Parser{
       return new If_($condition, $thenBranch, $elseBranch);
     }
 
+    /**
+     * Parse a block of statements
+     * @return array Array of parsed statements
+     */
     private function block()
     {
       $statements = [];
@@ -211,6 +261,10 @@ class Parser{
       return $statements;
     }
 
+    /**
+     * Parse a print statement
+     * @return Printr The parsed print statement
+     */
     private function printStatement()
     {
       $value = $this->expression();
@@ -218,6 +272,10 @@ class Parser{
       return new Printr($value);
     }
 
+    /**
+     * Parse a return statement
+     * @return ReturnR The parsed return statement
+     */
     private function returnStatement()
     {
       $keyword = $this->previous();
@@ -232,6 +290,10 @@ class Parser{
       return new ReturnR($keyword, $value);
     }
 
+    /**
+     * Parse an expression statement
+     * @return Stmt The parsed expression statement
+     */
     private function expressionStatement() : Stmt 
     {
       $expr = $this->expression();
@@ -239,6 +301,11 @@ class Parser{
       return new Expression($expr);
     }
 
+    /**
+     * Parse a function declaration
+     * @param string $kind Type of function being parsed ("function" or "method")
+     * @return Function_ The parsed function declaration
+     */
     private function aFunction(string $kind)
     {
       $name = $this->consume(TokenType::IDENTIFIER, "Expect ". $kind." name.");
@@ -264,6 +331,10 @@ class Parser{
       return new Function_($name, $parameter, $body);
     }
 
+    /**
+     * Parse an assignment expression
+     * @return Expr The parsed assignment expression
+     */
     private function assignment() : Expr{
       // $expr = $this->equality();
       $expr = $this->or();
@@ -272,9 +343,8 @@ class Parser{
         $equals = $this->previous();
         $value = $this->assignment();
 
-        if (get_class($expr) === "Phlox\Expr\Variable"){
-          $name = ($expr->name);
-          return new Assign($name, $value);
+        if ($expr instanceof Variable) {
+          return new Assign($expr->name, $value);
         } else if ($expr instanceof Get) {
           $get = $expr;
           return new Set($get->object, $get->name, $value);
@@ -286,6 +356,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a logical OR expression
+     * @return Expr The parsed logical OR expression
+     */
     private function or(): Expr 
     {
       $expr = $this->and();
@@ -299,6 +373,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a logical AND expression
+     * @return Expr The parsed logical AND expression
+     */
     private function and(): Expr
     {
       $expr = $this->equality();
@@ -312,6 +390,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse an equality expression
+     * @return Expr The parsed equality expression
+     */
     private function equality():Expr
     {
         $expr = $this->comparison();
@@ -325,6 +407,10 @@ class Parser{
         return $expr;
     }
 
+    /**
+     * Parse a comparison expression
+     * @return Expr The parsed comparison expression
+     */
     private function comparison():Expr{
       $expr = $this->term();
 
@@ -337,6 +423,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a term (addition/subtraction) expression
+     * @return Expr The parsed term expression
+     */
     private function term():Expr
     {
       $expr = $this->factor();
@@ -350,6 +440,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a factor (multiplication/division) expression
+     * @return Expr The parsed factor expression
+     */
     private function factor():Expr
     {
       $expr = $this->unary();
@@ -363,6 +457,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a unary expression
+     * @return Expr The parsed unary expression
+     */
     private function unary() : Expr {
       if($this->match(TokenType::BANG, TokenType::MINUS)){
         $operator = $this->previous();
@@ -373,6 +471,11 @@ class Parser{
       return $this->call();
     }
 
+    /**
+     * Complete parsing of a function call
+     * @param Expr $callee The function being called
+     * @return Call The parsed function call expression
+     */
     private function finishCall (Expr $callee)
     {
       $arguments = [];
@@ -391,6 +494,10 @@ class Parser{
       return new Call($callee, $paren, $arguments);
     }
 
+    /**
+     * Parse a function call expression
+     * @return Expr The parsed call expression
+     */
     private function call():Expr
     {
       $expr  = $this->primary();
@@ -410,6 +517,10 @@ class Parser{
       return $expr;
     }
 
+    /**
+     * Parse a primary expression (literals, groupings, etc.)
+     * @return Expr The parsed primary expression
+     */
     private function primary() : Expr {
       
       if ($this->match(TokenType::FALSE)) return new Literal(false);
@@ -442,17 +553,34 @@ class Parser{
       throw $this->error($this->peek(), "Expect expression.\n");
     }
 
+    /**
+     * Consume a token of expected type or throw error
+     * @param string $type Expected token type
+     * @param string $message Error message if token doesn't match
+     * @return Token The consumed token
+     * @throws ParzerError if token doesn't match expected type
+     */
     private function consume(string $type, string $message){
       if($this->check($type)) return $this->advance();
 
       throw $this->error($this->peek(), $message);
     }
 
+    /**
+     * Create a parser error
+     * @param Token $token Token where error occurred
+     * @param string $message Error message
+     * @return ParzerError The created error
+     */
     private function error(Token $token, string $message):ParzerError{
       Phlox::error_($token, $message);
       return new ParzerError();
     }
 
+    /**
+     * Synchronize parser state after error
+     * Discards tokens until a statement boundary is found
+     */
     private function synchronize(){
       $this->advance();
 
@@ -475,6 +603,11 @@ class Parser{
       }
     }
 
+    /**
+     * Check if current token matches any of given types
+     * @param string ...$types Token types to match
+     * @return bool True if current token matches any type
+     */
     private function match(string ...$types) : bool 
     {
       foreach($types as $type){
@@ -487,86 +620,54 @@ class Parser{
       return false;
     }
 
+    /**
+     * Check if current token is of given type
+     * @param string $type Token type to check
+     * @return bool True if current token matches type
+     */
     private function check(string $type):bool
     {
       if($this->isAtEnd()) return false;
       return $this->peek()->type === $type;
     }
 
+    /**
+     * Advance to next token and return previous token
+     * @return Token The previous token
+     */
     private function advance():Token
     {
       if(! $this->isAtEnd()) $this->current++;
       return $this->previous();
     }
 
+    /**
+     * Check if we've reached end of input
+     * @return bool True if at end of input
+     */
     private function isAtEnd():bool
     {
       return $this->peek()->type == TokenType::EOF;
     }
 
+    /**
+     * Get current token without consuming it
+     * @return Token The current token
+     */
     private function peek():Token
     {
       return $this->tokens[$this->current];
     }
 
+    /**
+     * Get previous token
+     * @return Token The previous token
+     */
     private function previous():Token
     {
       return $this->tokens[$this->current -1];
     }
 
-
-    /*
-
- private Expr unary() {
-    if (match(BANG, MINUS)) {
-      Token operator = previous();
-      Expr right = unary();
-      return new Expr.Unary(operator, right);
-    }
-
-     private Token consume(TokenType type, String message) {
-    if (check(type)) return advance();
-
-    throw error(peek(), message);
-  }
-//< consume
-//> check
-  private boolean check(TokenType type) {
-    if (isAtEnd()) return false;
-    return peek().type == type;
-  }
-//< check
-//> advance
-  private Token advance() {
-    if (!isAtEnd()) current++;
-    return previous();
-  }
-//< advance
-//> utils
-  private boolean isAtEnd() {
-    return peek().type == EOF;
-  }
-
-  private Token peek() {
-    return tokens.get(current);
-  }
-
-  private Token previous() {
-    return tokens.get(current - 1);
-  }
-    */
-
-    // private function unary(){
-    //     if()
-    // }
-
-
-    // private function advance()
-
-    
-    /** Utilities for the Parser */
-
-    /* --------------- */
 }
 
 class ParzerError extends \RuntimeException{}

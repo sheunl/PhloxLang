@@ -34,13 +34,33 @@ use Phlox\Stmt\Var_;
 use Phlox\Stmt\While_;
 use PhpCsFixer\ToolInfo;
 
+/**
+ * Main interpreter class that executes Lox code
+ * Implements both expression and statement visitors to traverse and evaluate the AST
+ */
 class Interpreter implements ExpressionVisitor, StatementVisitor{
 
+    /**
+     * Current environment for variable scoping
+     * @var Environment
+     */
     private Environment $environment;
-    public Environment $globals;
-    private Map $locals;
-    public $test = 88487383;
 
+    /**
+     * Global environment containing built-in functions
+     * @var Environment  
+     */
+    public Environment $globals;
+
+    /**
+     * Map of resolved variable scopes
+     * @var Map
+     */
+    private Map $locals;
+
+    /**
+     * Initialize interpreter with global environment
+     */
     public function __construct()
     {
         $this->globals = new Environment();
@@ -58,6 +78,10 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         });
     }
 
+    /**
+     * Get the locals map, initializing if needed
+     * @return Map The locals map
+     */
     private function getInterpreterLocals():Map
     {
         if(!isset($this->locals)){
@@ -67,6 +91,10 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $this->locals;
     }
 
+    /**
+     * Get the current environment, defaulting to globals if not set
+     * @return Environment The current environment
+     */
     private function getEnvironment():Environment
     {
         if (! isset($this->environment)){
@@ -76,9 +104,13 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $this->environment;
     }
 
+    /**
+     * Visit and evaluate an assignment expression
+     * @param Assign $expr The assignment expression
+     * @return mixed The assigned value
+     */
     public function visitAssignExpr(Assign $expr){
         $value = $this->evaluate($expr->value);
-        // $this->getEnvironment()->assign($expr->name, $value);
         $distance = $this->getInterpreterLocals()->get($expr);
         if($distance !== null){
             $this->getEnvironment()->assignAt($distance, $expr->name, $value);
@@ -87,6 +119,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         }
     }
 
+    /**
+     * Visit and evaluate a binary expression
+     * @param Binary $expr The binary expression
+     * @return mixed The result of the operation
+     */
     public function visitBinaryExpr(Binary $expr){
         $left = $this->evaluate($expr->left);
         $right = $this->evaluate($expr->right);
@@ -131,6 +168,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and evaluate a function call expression
+     * @param Call $expr The call expression
+     * @return mixed The result of the function call
+     */
     public function visitCallExpr(Call $expr){
         $callee = $this->evaluate($expr->callee);
 
@@ -151,6 +193,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $function->call($this, $arguments);
     }
 
+    /**
+     * Visit and evaluate a property access expression
+     * @param Get $expr The get expression
+     * @return mixed The value of the property
+     */
     public function visitGetExpr(Get $expr){
         $object = $this->evaluate($expr->object);
 
@@ -161,12 +208,22 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         throw new RuntimeError($expr->name, "Only instances have properties");
     }
 
+    /**
+     * Visit and execute a block statement
+     * @param Block $stmt The block statement
+     * @return null
+     */
     public function visitBlockStmt(Block $stmt)
     {
       $this->executeBlock($stmt->statements, new Environment($this->getEnvironment()));
       return null;
     }
 
+    /**
+     * Visit and execute a class declaration
+     * @param AClass $stmt The class declaration
+     * @return null
+     */
     public function visitClassStmt(AClass $stmt)
     {
         $superclass = null;
@@ -200,24 +257,48 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         $this->getEnvironment()->assign($stmt->name, $klass);
     }
 
+    /**
+     * Visit and evaluate a grouping expression
+     * @param Grouping $expr The grouping expression
+     * @return mixed The evaluated result
+     */
     public function visitGroupingExpr(Grouping $expr){
         return $this->evaluate($expr->expression);
     }
 
+    /**
+     * Evaluate an expression by accepting this visitor
+     * @param Expr $expr The expression to evaluate
+     * @return mixed The evaluated result
+     */
     private function evaluate(Expr $expr) {
         return $expr->accept($this);
     }
 
+    /**
+     * Execute a statement by accepting this visitor
+     * @param Stmt $stmt The statement to execute
+     */
     private function execute(Stmt $stmt)
     {
         $stmt->accept($this);
     }
 
+    /**
+     * Resolve a variable reference to its scope depth
+     * @param Expr $expr The variable expression
+     * @param int $depth The scope depth
+     */
     function resolve(Expr $expr, int $depth)
     {
         $this->getInterpreterLocals()->put($expr, $depth);
     }
 
+    /**
+     * Execute a block of statements in a new environment
+     * @param array $statements The statements to execute
+     * @param Environment $environment The new environment
+     */
     public function executeBlock(array $statements, Environment $environment) {
         $previous = $this->getEnvironment();
 
@@ -232,10 +313,20 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         }
     }
 
+    /**
+     * Visit and evaluate a literal expression
+     * @param Literal $expr The literal expression
+     * @return mixed The literal value
+     */
     public function visitLiteralExpr(Literal $expr){
         return $expr->value;
     }
 
+    /**
+     * Visit and evaluate a logical expression
+     * @param Logical $expr The logical expression
+     * @return mixed The result of the logical operation
+     */
     public function visitLogicalExpr(Logical $expr)
     {
         $left = $this->evaluate($expr->left);
@@ -249,6 +340,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $this->evaluate($expr->right);
     }
 
+    /**
+     * Visit and evaluate a unary expression
+     * @param Unary $expr The unary expression
+     * @return mixed The result of the unary operation
+     */
     public function visitUnaryExpr(Unary $expr) {
         $right = $this->evaluate($expr->right);
     
@@ -266,12 +362,22 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and evaluate a variable expression
+     * @param Variable $expr The variable expression
+     * @return mixed The variable's value
+     */
     public function visitVariableExpr(Variable $expr)
     {
-        // return $this->getEnvironment()->get($expr->name);
         return $this->lookUpVariable($expr->name, $expr);    
     }
 
+    /**
+     * Look up a variable's value in the appropriate scope
+     * @param Token $name The variable name token
+     * @param Expr $expr The variable expression
+     * @return mixed The variable's value
+     */
     private function lookUpVariable(Token $name, Expr $expr)
     {
         $distance = $this->getInterpreterLocals()->get($expr);
@@ -282,11 +388,22 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         }
     }
 
+    /**
+     * Check if an operand is a number
+     * @param Token $operator The operator token
+     * @param mixed $operand The operand to check
+     */
     private function checkNumberOperand(Token $operator, $operand)
     {
         if(gettype($operand) === 'double') return;
     }
 
+    /**
+     * Check if both operands are numbers
+     * @param Token $operator The operator token
+     * @param mixed $left The left operand
+     * @param mixed $right The right operand
+     */
     private function _checkNumberOperand(Token $operator, $left, $right)
     {
         if (gettype($left) === 'double' && gettype($right) === 'double') return;
@@ -294,6 +411,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         throw new RuntimeError($operator, "Operands must be numbers.");
     }
 
+    /**
+     * Determine if a value is truthy in Lox
+     * @param mixed $object The value to check
+     * @return bool True if the value is truthy
+     */
     private function isTruthy($object):bool
     {
         if ($object === null) return false;
@@ -301,6 +423,12 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return true;
     }
 
+    /**
+     * Check if two values are equal
+     * @param mixed $a First value
+     * @param mixed $b Second value
+     * @return bool True if values are equal
+     */
     private function isEqual($a, $b)
     {
         if($a === null && $b === null) return true;
@@ -309,6 +437,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $a === $b;
     }
 
+    /**
+     * Convert a value to its string representation
+     * @param mixed $object The value to stringify
+     * @return string The string representation
+     */
     private function stringify($object)
     {
         if($object === null) return "nil";
@@ -325,12 +458,22 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return strval($object);
     }
 
+    /**
+     * Visit and execute an expression statement
+     * @param Expression $stmt The expression statement
+     * @return null
+     */
     public function visitExpressionStmt(Expression $stmt)
     {
         $this->evaluate($stmt->expression);
         return null;
     }
 
+    /**
+     * Visit and execute a function declaration
+     * @param Function_ $stmt The function declaration
+     * @return null
+     */
     public function visitFunctionStmt(Function_ $stmt)
     {
         $function = new LoxFunction($stmt, $this->getEnvironment(), false);
@@ -338,6 +481,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and execute an if statement
+     * @param If_ $statement The if statement
+     * @return null
+     */
     public function visitIfStmt(If_ $statement)
     {
         if ($this->isTruthy($this->evaluate($statement->condition))){
@@ -349,6 +497,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and execute a print statement
+     * @param Printr $stmt The print statement
+     * @return null
+     */
     public function visitPrintStmt(Printr $stmt)
     {
         $value = $this->evaluate($stmt->expression);
@@ -357,6 +510,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and execute a return statement
+     * @param ReturnR $stmt The return statement
+     * @throws PhloxReturn_ The return value wrapped in an exception
+     */
     public function visitReturnStmt(ReturnR $stmt)
     {
         $value = null;
@@ -365,6 +523,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         throw new PhloxReturn_($value);
     }
 
+    /**
+     * Visit and execute a variable declaration
+     * @param Var_ $stmt The variable declaration
+     * @return null
+     */
     public function visitVarStmt(Var_ $stmt)
     {
         $value = null;
@@ -376,6 +539,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and execute a while statement
+     * @param While_ $stmt The while statement
+     * @return null
+     */
     public function visitWhileStmt(While_ $stmt)
     {
         while ($this->isTruthy($this->evaluate($stmt->condition)))
@@ -386,6 +554,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return null;
     }
 
+    /**
+     * Visit and evaluate a property assignment
+     * @param Set $expr The set expression
+     * @return mixed The assigned value
+     */
     public function visitSetExpr(Set $expr){
         $object = $this->evaluate($expr->object);
 
@@ -398,6 +571,11 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $value;
     }
 
+    /**
+     * Visit and evaluate a super expression
+     * @param Super $expr The super expression
+     * @return mixed The superclass method
+     */
     public function visitSuperExpr(Super $expr)
     {
         $distance = $this->locals->get($expr);
@@ -416,21 +594,26 @@ class Interpreter implements ExpressionVisitor, StatementVisitor{
         return $method->bind($object);
     }
 
+    /**
+     * Visit and evaluate a this expression
+     * @param This $expr The this expression
+     * @return mixed The this instance
+     */
     public function visitThisExpr(This $expr){
         return $this->lookUpVariable($expr->keyword, $expr);
     }
-    // public function visitUnaryExpr(Unary $expr){}
 
-
+    /**
+     * Interpret a sequence of statements
+     * @param array $statements The statements to interpret
+     */
     public function interpret(array $statements)
     {
         try {
             foreach($statements as $statement){
                 $this->execute($statement);
             }
-            // $value = $this->evaluate($expression);
-            // print_r($this->stringify($value));
-            // print("\n");
+            
         } catch (RuntimeError $error) {
             Phlox::runtimeError($error);
         }

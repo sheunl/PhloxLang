@@ -4,26 +4,25 @@ namespace  Phlox\Stmt;
 use Phlox\Expr\Expr;
 use Phlox\Token;
 
+/**
+ * Represents a return statement in the AST
+ * Example: return value;
+ */
 class ReturnR extends Stmt
 {
-    public function __construct(public Token $keyword, public Expr $value){}
+    /**
+     * Create a new return statement
+     * @param Token $keyword The 'return' keyword token
+     * @param Expr|null $value Optional value to return
+     */
+    public function __construct(public Token $keyword, public ?Expr $value){}
 
+    /**
+     * Accept a visitor to process this statement
+     * @param Visitor $visitor The visitor to accept
+     * @return mixed The result of visiting this node
+     */
     public function accept(Visitor $visitor){
         return $visitor->visitReturnStmt($this);
     }
 }
-
-// static class Return extends Stmt {
-//     Return(Token keyword, Expr value) {
-//       this.keyword = keyword;
-//       this.value = value;
-//     }
-
-//     @Override
-//     <R> R accept(Visitor<R> visitor) {
-//       return visitor.visitReturnStmt(this);
-//     }
-
-//     final Token keyword;
-//     final Expr value;
-//   }

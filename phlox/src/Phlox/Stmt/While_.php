@@ -1,32 +1,28 @@
 <?php
 
-
 namespace Phlox\Stmt;
 
 use Phlox\Expr\Expr;
 
+/**
+ * Represents a while loop statement in the AST
+ * Example: while (condition) { body }
+ */
 class While_ extends Stmt
 {
-
+    /**
+     * Create a new while statement
+     * @param Expr $condition The loop condition expression
+     * @param Stmt $body The loop body statement
+     */
     public function __construct(public Expr $condition, public Stmt $body){}
 
-    public function accept(Visitor $visitor)
-    {
-      return $visitor->visitWhileStmt($this);
+    /**
+     * Accept a visitor to process this statement
+     * @param Visitor $visitor The visitor to accept
+     * @return mixed The result of visiting this node
+     */
+    public function accept(Visitor $visitor){
+        return $visitor->visitWhileStmt($this);
     }
 }
-
-// static class While extends Stmt {
-//     While(Expr condition, Stmt body) {
-//       this.condition = condition;
-//       this.body = body;
-//     }
-
-//     @Override
-//     <R> R accept(Visitor<R> visitor) {
-//       return visitor.visitWhileStmt(this);
-//     }
-
-//     final Expr condition;
-//     final Stmt body;
-//   }

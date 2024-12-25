@@ -6,11 +6,32 @@ use Phlox\Scanner;
 use Exception;
 use Phlox\Parser;
 
+/**
+ * Main interpreter class for the Lox language
+ * Handles program execution and error reporting
+ */
 class Phlox{
+    /**
+     * The interpreter instance
+     * @var Interpreter
+     */
     private static Interpreter $interpreter;
+
+    /**
+     * Flag indicating if a syntax error occurred
+     * @var bool
+     */
     public static $hadError = false; 
+
+    /**
+     * Flag indicating if a runtime error occurred
+     * @var bool
+     */
     public static $hadRuntimeError = false;
 
+    /**
+     * Initialize the Phlox interpreter
+     */
     public function __construct()
     {
         if(!isset(self::$interpreter)){
@@ -18,39 +39,66 @@ class Phlox{
         }
     }
 
+    /**
+     * Main entry point for the Phlox interpreter
+     * Handles command line arguments and starts either file execution or REPL mode
+     * 
+     * @param array $args Command line arguments passed to the program
+     */
     public static function main(array $args){
+        // Create new interpreter instance
         self::$interpreter = new Interpreter();
-        if (count($args) >2 ){
+
+        // Check number of command line arguments
+        if (count($args) > 2 ){
+            // Too many arguments provided
             echo "Usage: php phlox [script]\n";
             exit();
-        }elseif (count($args)==2){
+        } elseif (count($args) == 2){
+            // Execute the script file specified in args[1]
             self::runFile($args[1]);
 
-            //indicate an error in the exit code.
+            // Exit with error code 65 if syntax/static error occurred
             if (self::$hadError) exit(65);
-        }else{
+        } else {
+            // No script file provided, start interactive REPL mode
             self::runPrompt();
         }
     }
 
-    private static function  runFile(string $path){
-        // echo __FUNCTION__." Called\n";
+    /**
+     * Execute a Lox source file
+     * Reads the file contents and runs them through the interpreter
+     * 
+     * @param string $path Path to the source file to execute
+     */
+    private static function runFile(string $path){
         try{
+            // Check if file exists before trying to read it
             if (!file_exists($path)) throw new Exception("File not found");
+            
+            // Open file and read entire contents
             $file = fopen($path,"r");
             $source = fread($file,filesize($path));
+            
+            // Execute the source code
             self::run($source);
 
-            if(self::$hadError) exit(65);
-            if(self::$hadRuntimeError) exit(70);
+            // Exit with appropriate error codes if errors occurred
+            if(self::$hadError) exit(65); // Exit code 65 indicates syntax/static error
+            if(self::$hadRuntimeError) exit(70); // Exit code 70 indicates runtime error
 
         } catch (Exception $e){
             echo "Error Reading File.\n";
         }
     }
 
+    /**
+     * Run the REPL (Read-Eval-Print Loop) interactive prompt
+     * Repeatedly reads lines of input, executes them, and shows results
+     * Continues until Ctrl-D or error occurs
+     */
     private static function  runPrompt(){
-        // echo __FUNCTION__." Called\n";
         try{
             while(true){
                $line = readline("> ");
@@ -63,15 +111,18 @@ class Phlox{
         }
     }
 
+    /**
+     * Execute source code through the full interpretation pipeline
+     * 1. Scans source into tokens
+     * 2. Parses tokens into AST statements
+     * 3. Resolves variable bindings
+     * 4. Interprets the statements
+     * 
+     * @param string $source The source code to execute
+     */
     private static function run($source){
-        // echo __FUNCTION__." Called\n";
         $scanner = new Scanner($source);
         $tokens = $scanner->scanTokens();
-
-        // foreach($tokens as $token){
-        //     echo($token);
-        //     echo("\n");
-        // }
 
         $parser = new Parser($tokens);
         $statements = $parser->parse();
@@ -84,15 +135,22 @@ class Phlox{
         if(Phlox::$hadError) return;
 
         self::$interpreter->interpret($statements);
-        // echo new Ast{}
-
     }
 
+    /**
+     * Report an error at a specific line number
+     * @param int $line The line number where the error occurred
+     * @param string $message The error message
+     */
     public static function error(int $line,string $message)
     {
         self::report($line,"", $message);
     }
 
+    /**
+     * Report a runtime error that occurred during interpretation
+     * @param RuntimeError $error The runtime error that occurred
+     */
     public static function runtimeError(RuntimeError $error)
     {
         echo $error->getMessage()."\n[line ". '$error->token->line'."]\n";
@@ -104,6 +162,11 @@ class Phlox{
         self::$hadError = true; //Will PHP allow this, if $hadError was not explicitly set to static?
     }
 
+    /**
+     * Report an error at a specific token
+     * @param Token $token The token where the error occurred
+     * @param string $message The error message
+     */
     public static function error_(Token $token, string $message)
     {
         if($token->type == TokenType::EOF){
@@ -112,4 +175,5 @@ class Phlox{
             Phlox::report($token->line, " at '". $token->lexeme."'",$message);
         }
     }
+
 }

@@ -1,37 +1,32 @@
 <?php
  
- namespace Phlox\Stmt;
+namespace Phlox\Stmt;
 
 use Phlox\Expr\Expr;
 use Phlox\Expr\Variable;
 use Phlox\Token;
 
+/**
+ * Represents a class declaration in the AST
+ * Example: class MyClass { ... }
+ */
 class AClass extends Stmt
 {
-
+    /**
+     * Create a new class declaration
+     * @param Token $name The class name token
+     * @param Variable|null $superclass The superclass expression if any
+     * @param array $methods Array of method declarations
+     */
     public function __construct(public Token $name, public ?Variable $superclass,  public ?array $methods = null){}
 
-    public function accept(Visitor $visitor)
-    {
+    /**
+     * Accept a visitor to process this statement
+     * @param Visitor $visitor The visitor to accept
+     * @return mixed The result of visiting this node
+     */
+    public function accept(Visitor $visitor){
         return $visitor->visitClassStmt($this);
     }
-
 }
 
-
-    // Class(Token name,
-    //       Expr.Variable superclass,
-    //       List<Stmt.Function> methods) {
-    //   this.name = name;
-    //   this.superclass = superclass;
-    //   this.methods = methods;
-    // }
-
-    // @Override
-    // <R> R accept(Visitor<R> visitor) {
-    //   return visitor.visitClassStmt(this);
-    // }
-
-    // final Token name;
-    // final Expr.Variable superclass;
-    // final List<Stmt.Function> methods;
