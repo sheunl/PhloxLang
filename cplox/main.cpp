@@ -3,10 +3,12 @@
 
 #include "common.hpp"
 #include "chunk.hpp"
+#include "vm.hpp"
 #include "debug.hpp"
 
 
 int main(int argc, const char* argv[]) {
+    initVM();
     Chunk chunk;
     enum OpCode op = OP_RETURN;
     // enum OpCode op2 = OP_CONSTANT;
@@ -22,7 +24,10 @@ int main(int argc, const char* argv[]) {
     
     
     disassembleChunk(chunk, "test chunk");
+    interpret(chunk);
     
+    freeVM();
     chunk.code.clear();
+
     return 0;
 }
