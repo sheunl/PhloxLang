@@ -5,7 +5,7 @@
 
 struct VM {
     Chunk chunk;
-    std::vector<uint8_t> ip;
+    uint8_t* ip;
 };
 
 enum InterpretResult {
